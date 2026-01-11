@@ -1,43 +1,20 @@
-# LVGL Porting Example
+# Home Panel
 
-The example demonstrates how to port LVGL(v8). And for RGB LCD, it can enable the avoid tearing fucntion.
+An ESP32-based project utilizing the LVGL (Light and Versatile Graphics Library) to create a functional and aesthetic home display panel.
 
-## How to Use
+## Project Philosophy
 
-To use this example, please firstly install the following dependent libraries:
+This project adheres to a set of strict development guidelines to ensure maintainability, simplicity, and architectural clarity:
 
-- lvgl (>= v8.3.9, < v9)
+- **Simplicity Above All**: Every change is designed to be as simple as possible, impacting minimal code to maintain a clean codebase.
+- **Architectural Documentation**: The project maintains thorough documentation of its internal and external architecture.
+- **Evidence-Based Development**: No claims are made about the codebase without direct verification. All changes are grounded in a "think first, then read" approach.
+- **Clear Communication**: Every update is accompanied by a high-level explanation of the changes made.
 
-Follow the steps below to configure:
+## Development Standards
 
-1. For **ESP32_Display_Panel**:
+- **Incremental Progress**: Major changes are reviewed and planned before implementation.
+- **Simplicity and Modularity**: The codebase is kept modular and straightforward to facilitate easy updates and debugging.
 
-    - Follow the [steps](../../README.md#configuring-drivers) to configure drivers if needed.
-    - If using a supported development board, follow the [steps](../../README.md#using-supported-development-boards) to configure it.
-    - If using a custom board, follow the [steps](../../README.md#using-custom-development-boards) to configure it.
-
-2. For **lvgl**:
-
-    - Follow the [steps](../../README.md#configuring-lvgl) to add *lv_conf.h* file and change the configurations.
-    - Modify the macros in the [lvgl_port_v8.h](./lvgl_port_v8.h) file to configure the LVGL porting parameters.
-
-3. Navigate to the `Tools` menu in the Arduino IDE to choose a ESP board and configure its parameters. For supported boards, please refter to [Configuring Supported Development Boards](../../README.md#configuring-supported-development-boards)
-4. Verify and upload the example to your ESP board.
-
-## Serial Output
-
-```bash
-...
-LVGL porting example start
-Initialize panel device
-Initialize LVGL
-Create UI
-LVGL porting example end
-IDLE loop
-IDLE loop
-...
-```
-
-## Troubleshooting
-
-Please check the [FAQ](../../../../README.md#faq) first to see if the same question exists. If not, please create a [Github issue](https://github.com/esp-arduino-libs/ESP32_Display_Panel/issues). We will get back to you as soon as possible.
+---
+*Note: This description is derived from the project's working guidelines to reflect its core development standards.*
