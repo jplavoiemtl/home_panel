@@ -66,6 +66,157 @@ void initMQTT();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 void updateConnectionStatus();
 
+
+// ============================================================================
+// WiFi Functions
+// ============================================================================
+
+void initWiFi() {
+    Serial.println("Connecting to WiFi...");
+
+    // Update UI
+    bsp_display_lock(0);
+    if (ui_labelConnectionStatus) {
+        lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
+    }
+    bsp_display_unlock();
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid1, password1);
+    currentWiFiNetwork = 1;
+
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.printf("\nConnected to %s\n", ssid1);
+        Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+    } else {
+        Serial.println("\nPrimary WiFi failed, trying secondary...");
+        WiFi.begin(ssid2, password2);
+        currentWiFiNetwork = 2;
+
+        attempts = 0;
+        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+            delay(500);
+            Serial.print(".");
+            attempts++;
+        }
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.printf("\nConnected to %s\n", ssid2);
+            Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+        } else {
+            Serial.println("\nWiFi connection failed!");
+        }
+    }
+
+    updateConnectionStatus();
+}
+
+void checkWiFi() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WiFi disconnected, reconnecting...");
+        initWiFi();
+    }
+}
+
+// ============================================================================
+// MQTT Functions
+// ============================================================================
+
+void initMQTT() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("Cannot init MQTT - WiFi not connected");
+        return;
+    }
+
+    Serial.println("Initializing MQTT...");
+
+    // Configure MQTT client based on current network
+    netConfigureMqttClient(currentWiFiNetwork);
+
+    // Attempt initial connection
+    netCheckMqtt(true);  // Bypass rate limit for initial connection
+
+    updateConnectionStatus();
+}
+
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+    // Null-terminate the payload
+    char message[length + 1];
+    memcpy(message, payload, length);
+    message[length] = '\0';
+
+    Serial.printf("MQTT [%s]: %s\n", topic, message);
+
+    // Handle power topic
+    if (strcmp(topic, TOPIC_POWER) == 0) {
+        bsp_display_lock(0);
+        if (ui_labelPowerValue) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%s kW", message);
+            lv_label_set_text(ui_labelPowerValue, buf);
+        }
+        bsp_display_unlock();
+    }
+    // Handle energy topic
+    else if (strcmp(topic, TOPIC_ENERGY) == 0) {
+        bsp_display_lock(0);
+        if (ui_labelEnergyValue) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%s", message);
+            lv_label_set_text(ui_labelEnergyValue, buf);
+        }
+        bsp_display_unlock();
+    }
+    // Handle image topic
+    else if (strcmp(topic, TOPIC_IMAGE) == 0) {
+        Serial.println("Image request received via MQTT");
+        requestLatestImage();
+    }
+}
+
+// ============================================================================
+// UI Update Functions
+// ============================================================================
+
+void updateConnectionStatus() {
+    bsp_display_lock(0);
+
+    if (ui_labelConnectionStatus) {
+        if (WiFi.status() != WL_CONNECTED) {
+            lv_label_set_text(ui_labelConnectionStatus, "WiFi: Disconnected");
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFF0000), LV_PART_MAIN);
+        } else if (!netIsMqttConnected()) {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: ...", WiFi.SSID().c_str());
+            lv_label_set_text(ui_labelConnectionStatus, buf);
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
+        } else {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: OK", WiFi.SSID().c_str());
+            lv_label_set_text(ui_labelConnectionStatus, buf);
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0x00FF00), LV_PART_MAIN);
+        }
+    }
+
+    // Show/hide activity spinner based on MQTT connection
+    if (ui_ActivitySpinner) {
+        if (netIsMqttConnected()) {
+            lv_obj_add_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+
+    bsp_display_unlock();
+}
+
 // ============================================================================
 // Setup
 // ============================================================================
@@ -178,154 +329,4 @@ void loop() {
 
     // Small delay to prevent watchdog issues
     delay(5);
-}
-
-// ============================================================================
-// WiFi Functions
-// ============================================================================
-
-void initWiFi() {
-    Serial.println("Connecting to WiFi...");
-
-    // Update UI
-    bsp_display_lock(0);
-    if (ui_labelConnectionStatus) {
-        lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
-    }
-    bsp_display_unlock();
-
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid1, password1);
-    currentWiFiNetwork = 1;
-
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        delay(500);
-        Serial.print(".");
-        attempts++;
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.printf("\nConnected to %s\n", ssid1);
-        Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
-    } else {
-        Serial.println("\nPrimary WiFi failed, trying secondary...");
-        WiFi.begin(ssid2, password2);
-        currentWiFiNetwork = 2;
-
-        attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-            delay(500);
-            Serial.print(".");
-            attempts++;
-        }
-
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.printf("\nConnected to %s\n", ssid2);
-            Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
-        } else {
-            Serial.println("\nWiFi connection failed!");
-        }
-    }
-
-    updateConnectionStatus();
-}
-
-void checkWiFi() {
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi disconnected, reconnecting...");
-        initWiFi();
-    }
-}
-
-// ============================================================================
-// MQTT Functions
-// ============================================================================
-
-void initMQTT() {
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("Cannot init MQTT - WiFi not connected");
-        return;
-    }
-
-    Serial.println("Initializing MQTT...");
-
-    // Configure MQTT client based on current network
-    netConfigureMqttClient(currentWiFiNetwork);
-
-    // Attempt initial connection
-    netCheckMqtt(true);  // Bypass rate limit for initial connection
-
-    updateConnectionStatus();
-}
-
-void mqttCallback(char* topic, byte* payload, unsigned int length) {
-    // Null-terminate the payload
-    char message[length + 1];
-    memcpy(message, payload, length);
-    message[length] = '\0';
-
-    Serial.printf("MQTT [%s]: %s\n", topic, message);
-
-    // Handle power topic
-    if (strcmp(topic, TOPIC_POWER) == 0) {
-        bsp_display_lock(0);
-        if (ui_labelPowerValue) {
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%s kW", message);
-            lv_label_set_text(ui_labelPowerValue, buf);
-        }
-        bsp_display_unlock();
-    }
-    // Handle energy topic
-    else if (strcmp(topic, TOPIC_ENERGY) == 0) {
-        bsp_display_lock(0);
-        if (ui_labelEnergyValue) {
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%s kWh", message);
-            lv_label_set_text(ui_labelEnergyValue, buf);
-        }
-        bsp_display_unlock();
-    }
-    // Handle image topic
-    else if (strcmp(topic, TOPIC_IMAGE) == 0) {
-        Serial.println("Image request received via MQTT");
-        requestLatestImage();
-    }
-}
-
-// ============================================================================
-// UI Update Functions
-// ============================================================================
-
-void updateConnectionStatus() {
-    bsp_display_lock(0);
-
-    if (ui_labelConnectionStatus) {
-        if (WiFi.status() != WL_CONNECTED) {
-            lv_label_set_text(ui_labelConnectionStatus, "WiFi: Disconnected");
-            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFF0000), LV_PART_MAIN);
-        } else if (!netIsMqttConnected()) {
-            char buf[64];
-            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: ...", WiFi.SSID().c_str());
-            lv_label_set_text(ui_labelConnectionStatus, buf);
-            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
-        } else {
-            char buf[64];
-            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: OK", WiFi.SSID().c_str());
-            lv_label_set_text(ui_labelConnectionStatus, buf);
-            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0x00FF00), LV_PART_MAIN);
-        }
-    }
-
-    // Show/hide activity spinner based on MQTT connection
-    if (ui_ActivitySpinner) {
-        if (netIsMqttConnected()) {
-            lv_obj_add_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
-        }
-    }
-
-    bsp_display_unlock();
 }
