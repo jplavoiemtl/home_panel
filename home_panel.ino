@@ -75,12 +75,13 @@ void logHeapStatus();
 void initWiFi() {
     Serial.println("Connecting to WiFi...");
 
-    // Update UI
-    bsp_display_lock(0);
-    if (ui_labelConnectionStatus) {
-        lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
+    // Update UI (100ms timeout to prevent deadlock)
+    if (bsp_display_lock(100)) {
+        if (ui_labelConnectionStatus) {
+            lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
+        }
+        bsp_display_unlock();
     }
-    bsp_display_unlock();
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid1, password1);
@@ -164,23 +165,25 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     // Handle power topic
     if (strcmp(topic, TOPIC_POWER) == 0) {
-        bsp_display_lock(0);
-        if (ui_labelPowerValue) {
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%s kW", message);
-            lv_label_set_text(ui_labelPowerValue, buf);
+        if (bsp_display_lock(100)) {
+            if (ui_labelPowerValue) {
+                char buf[32];
+                snprintf(buf, sizeof(buf), "%s kW", message);
+                lv_label_set_text(ui_labelPowerValue, buf);
+            }
+            bsp_display_unlock();
         }
-        bsp_display_unlock();
     }
     // Handle energy topic
     else if (strcmp(topic, TOPIC_ENERGY) == 0) {
-        bsp_display_lock(0);
-        if (ui_labelEnergyValue) {
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%s", message);
-            lv_label_set_text(ui_labelEnergyValue, buf);
+        if (bsp_display_lock(100)) {
+            if (ui_labelEnergyValue) {
+                char buf[32];
+                snprintf(buf, sizeof(buf), "%s", message);
+                lv_label_set_text(ui_labelEnergyValue, buf);
+            }
+            bsp_display_unlock();
         }
-        bsp_display_unlock();
     }
     // Handle image topic
     else if (strcmp(topic, TOPIC_IMAGE) == 0) {
@@ -194,7 +197,10 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // ============================================================================
 
 void updateConnectionStatus() {
-    bsp_display_lock(0);
+    // Use 100ms timeout to prevent deadlock if LVGL is busy
+    if (!bsp_display_lock(100)) {
+        return;  // Skip this update, try again next cycle
+    }
 
     if (ui_labelConnectionStatus) {
         if (WiFi.status() != WL_CONNECTED) {
@@ -279,9 +285,12 @@ void setup() {
 
     // Initialize LVGL UI
     Serial.println("Initializing UI...");
-    bsp_display_lock(0);
-    ui_init();
-    bsp_display_unlock();
+    if (bsp_display_lock(1000)) {  // 1 second timeout for init
+        ui_init();
+        bsp_display_unlock();
+    } else {
+        Serial.println("ERROR: Failed to acquire display lock for UI init!");
+    }
     Serial.println("UI initialized");
 
     // Initialize network module
