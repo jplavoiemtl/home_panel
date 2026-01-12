@@ -219,13 +219,9 @@ void updateConnectionStatus() {
         }
     }
 
-    // Show/hide activity spinner based on MQTT connection
+    // Activity spinner is now always shown to indicate LVGL is running
     if (ui_ActivitySpinner) {
-        if (netIsMqttConnected()) {
-            lv_obj_add_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
-        }
+        lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
     }
 
     bsp_display_unlock();
