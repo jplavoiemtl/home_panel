@@ -179,7 +179,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     // Handle image topic
     else if (strcmp(topic, TOPIC_IMAGE) == 0) {
         Serial.println("Image request received via MQTT");
-        requestLatestImage();
+        // requestLatestImage();
     }
 }
 
