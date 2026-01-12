@@ -55,7 +55,6 @@ home_panel/
 ├── esp_lcd_touch.h         # Touch driver
 ├── bsp_err_check.h         # Error handling macros
 ├── MjpegClass.h            # MJPEG support (optional)
-├── secrets.h               # Configuration (gitignored)
 ├── secrets_private.h       # Credentials (gitignored)
 ├── secrets_private.cpp     # Credential implementations (gitignored)
 ├── secrets_private.example.h  # Template for credentials
@@ -98,7 +97,6 @@ home_panel/
 ├── esp_lcd_axs15231b.h         # Display driver
 ├── esp_lcd_touch.h             # Touch driver
 ├── bsp_err_check.h             # Error handling
-├── secrets.h                   # Build configuration
 ├── secrets_private.h           # Credentials (gitignored)
 ├── secrets_private.cpp         # Credential implementations
 ├── secrets_private.example.h   # Credential template
@@ -396,7 +394,6 @@ ui_Screen2
    - WiFi SSID and password
    - MQTT server address and credentials
    - Image server URL
-3. (Optional) Edit `secrets.h` for build mode and topic configuration
 
 ### 7.3 Build Commands
 
@@ -446,7 +443,7 @@ pio device monitor --baud 115200
 
 ## 9. Configuration Files
 
-### 9.1 `secrets.h` (Build Configuration)
+### 9.1 `secrets_private.h` (Credentials - Gitignored)
 
 ```cpp
 // Build mode
@@ -457,11 +454,7 @@ pio device monitor --baud 115200
 #define MQTT_TOPIC_POWER "ha/hilo_meter_power"
 #define MQTT_TOPIC_ENERGY "hilo_energie"
 #define MQTT_TOPIC_IMAGE "esp32image"
-```
 
-### 9.2 `secrets_private.h` (Credentials - Gitignored)
-
-```cpp
 // WiFi
 extern const char* WIFI_SSID;
 extern const char* WIFI_PASSWORD;

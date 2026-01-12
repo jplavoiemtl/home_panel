@@ -5,11 +5,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#if defined(__has_include) && __has_include("secrets_private.h")
 #include "secrets_private.h"
-#else
-#include "secrets.h"
-#endif
 #include "ui.h"
 #include "esp_bsp.h"  // For bsp_display_lock/unlock
 #include "../ui_custom.h"  // Custom UI extensions (not overwritten by SquareLine Studio)

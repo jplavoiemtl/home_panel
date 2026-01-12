@@ -19,11 +19,7 @@
 #include "src/image/image_fetcher.h"
 
 // Secrets (credentials)
-#if defined(__has_include) && __has_include("secrets_private.h")
 #include "secrets_private.h"
-#else
-#include "secrets.h"
-#endif
 
 // ============================================================================
 // Configuration

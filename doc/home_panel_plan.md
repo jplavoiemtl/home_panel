@@ -177,9 +177,7 @@ The Home Panel project will create a clean, maintainable ESP32-S3 firmware by se
 - Remove unused includes, defines, and declarations
 - Ensure no references to battery, IMU, sleep, or motion remain
 
-#### Milestone 6.2: Credential Management Review
-
-- Verify `secrets.h` pattern works correctly
+- Verify `secrets_private.h` pattern works correctly
 - Confirm `secrets_private.example.h` provides clear template
 - Document credential setup for new developers
 
@@ -254,7 +252,6 @@ The following order minimizes integration risk:
 
 | File | Action | Notes |
 |------|--------|-------|
-| `secrets.h` | Already present | Review for completeness |
 | `secrets_private.h` | Already present | Excluded from git |
 | `secrets_private.cpp` | Already present | Excluded from git |
 | `secrets_private.example.h` | Already present | Template for developers |
