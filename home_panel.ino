@@ -1,299 +1,331 @@
+// Home Panel - ESP32-S3 Smart Display
+// Displays power/energy data via MQTT and camera images via HTTP
+
 #include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
 #include <lvgl.h>
+
 #include "display.h"
 #include "esp_bsp.h"
 #include "lv_port.h"
-#include "SD_MMC.h"
-#include "FS.h"
 #include "pincfg.h"
-#include <vector>
-#include <ESP32_JPEG_Library.h>
 
-#define PIC_FOLDER "/pic"
-#define DEMO_LVGL 1
-#define DEMO_PIC 2
-#define DEMO_MJPEG 3
-#define DEMO_MP3 4
-#define CURR_DEMO DEMO_PIC 
+// UI includes
+#include "ui.h"
 
-/** Set the rotation degree:
- *      - 0: 0 degree
- *      - 90: 90 degree
- *      - 180: 180 degree
- *      - 270: 270 degree  */
+// Module includes
+#include "src/net/net_module.h"
+#include "src/image/image_fetcher.h"
+
+// Secrets (credentials)
+#if defined(__has_include) && __has_include("secrets_private.h")
+#include "secrets_private.h"
+#else
+#include "secrets.h"
+#endif
+
+// ============================================================================
+// Configuration
+// ============================================================================
 
 #define LVGL_PORT_ROTATION_DEGREE (90)
 
-std::vector<char *> v_fileContent;
-File dir;
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
+// Display dimensions (after rotation)
+#define SCREEN_WIDTH  480
+#define SCREEN_HEIGHT 320
 
-int curr_show_index = 0;
+// MQTT Topics
+#define TOPIC_IMAGE "esp32image"
+#define TOPIC_POWER "ha/hilo_meter_power"
+#define TOPIC_ENERGY "hilo_energie"
 
-#define MAX_PIC_FILE_SIZE 307200 //= 480 * 320 * 2
+// ============================================================================
+// Global Objects
+// ============================================================================
 
-static uint8_t *img_read_data = NULL;
+// Network clients
+WiFiClient wifiClient;
+WiFiClientSecure secureClient;
+PubSubClient mqttClient;
 
-static lv_obj_t *img_obj = NULL;
-static uint16_t *pic_img_data = NULL;
-static uint32_t last_display_time = 0;
-const uint32_t IMAGE_CYCLE_DELAY_MS = 8000;
-static lv_img_dsc_t pic_img_dsc = {
-    .header = {
-        .cf = LV_IMG_CF_TRUE_COLOR,
-        .always_zero = 0,
-        .reserved = 0,
-        .w = 480,
-        .h = 320,
-    },
-    .data_size = 480 * 320 * 2,
-    .data = NULL,
-};
+// Timing
+unsigned long lastWiFiCheck = 0;
+constexpr unsigned long WIFI_CHECK_INTERVAL = 10000;  // 10 seconds
 
-const char picDir[] = PIC_FOLDER;
+// WiFi state
+int currentWiFiNetwork = 1;  // 1 = primary (ssid1), 2 = secondary (ssid2)
 
-//*****************************************************************************************
-// Decodes a single JPEG image from the input buffer into the output RGB565 buffer.
-static jpeg_error_t esp_jpeg_decoder_one_image(uint8_t *input_buf, int len, uint8_t *output_buf) {
-  jpeg_error_t ret = JPEG_ERR_OK;
-  int inbuf_consumed = 0;
+// ============================================================================
+// Forward Declarations
+// ============================================================================
 
-  // Generate default configuration
-  jpeg_dec_config_t config = {
-      .output_type = JPEG_RAW_TYPE_RGB565_BE,
-      .rotate = JPEG_ROTATE_0D,
-  };
+void initWiFi();
+void checkWiFi();
+void initMQTT();
+void mqttCallback(char* topic, byte* payload, unsigned int length);
+void updateConnectionStatus();
 
-  // Empty handle to jpeg_decoder
-  jpeg_dec_handle_t *jpeg_dec = NULL;
+// ============================================================================
+// Setup
+// ============================================================================
 
-  // Create jpeg_dec
-  jpeg_dec = jpeg_dec_open(&config);
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
 
-  // Create io_callback handle
-  jpeg_dec_io_t *jpeg_io = (jpeg_dec_io_t *)calloc(1, sizeof(jpeg_dec_io_t));
-  if (jpeg_io == NULL)
-  {
-    return JPEG_ERR_MEM;
-  }
+    Serial.println("\n\n=== Home Panel Starting ===");
+    Serial.printf("Chip: %s\n", ESP.getChipModel());
+    Serial.printf("Heap: %d free of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
+    Serial.printf("PSRAM: %d free of %d\n", ESP.getFreePsram(), ESP.getPsramSize());
 
-  // Create out_info handle
-  jpeg_dec_header_info_t *out_info = (jpeg_dec_header_info_t *)calloc(1, sizeof(jpeg_dec_header_info_t));
-  if (out_info == NULL)
-  {
-    return JPEG_ERR_MEM;
-  }
-  // Set input buffer and buffer len to io_callback
-  jpeg_io->inbuf = input_buf;
-  jpeg_io->inbuf_len = len;
+    // Initialize display
+    Serial.println("Initializing display...");
+    uint32_t buffer_size = EXAMPLE_LCD_QSPI_H_RES * EXAMPLE_LCD_QSPI_V_RES;
+    if (psramFound()) {
+        Serial.println("PSRAM found, using full buffer");
+    } else {
+        buffer_size = buffer_size / 10;
+        Serial.println("No PSRAM, using reduced buffer");
+    }
 
-  // Parse jpeg picture header and get picture for user and decoder
-  ret = jpeg_dec_parse_header(jpeg_dec, jpeg_io, out_info);
-  if (ret < 0) {
-    esp_rom_printf("JPEG decode parse failed\n");
-    goto _exit;
-  }
+    bsp_display_cfg_t cfg = {
+        .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
+        .buffer_size = buffer_size,
+#if LVGL_PORT_ROTATION_DEGREE == 90
+        .rotate = LV_DISP_ROT_90,
+#elif LVGL_PORT_ROTATION_DEGREE == 270
+        .rotate = LV_DISP_ROT_270,
+#elif LVGL_PORT_ROTATION_DEGREE == 180
+        .rotate = LV_DISP_ROT_180,
+#else
+        .rotate = LV_DISP_ROT_NONE,
+#endif
+    };
 
-  jpeg_io->outbuf = output_buf;
-  inbuf_consumed = jpeg_io->inbuf_len - jpeg_io->inbuf_remain;
-  jpeg_io->inbuf = input_buf + inbuf_consumed;
-  jpeg_io->inbuf_len = jpeg_io->inbuf_remain;
+    bsp_display_start_with_config(&cfg);
+    bsp_display_backlight_on();
+    Serial.println("Display initialized");
 
-  // Start decode jpeg raw data
-  ret = jpeg_dec_process(jpeg_dec, jpeg_io);
-  if (ret < 0) {
-    esp_rom_printf("JPEG decode process failed\n");
-    goto _exit;
-  }
+    // Initialize LVGL UI
+    Serial.println("Initializing UI...");
+    bsp_display_lock(0);
+    ui_init();
+    bsp_display_unlock();
+    Serial.println("UI initialized");
 
-_exit:
-  // Decoder deinitialize
-  jpeg_dec_close(jpeg_dec);
-  free(out_info);
-  free(jpeg_io);
-  return ret;
+    // Initialize network module
+    Serial.println("Initializing network module...");
+    NetConfig netCfg = {
+        .server1 = SERVER1,
+        .serverPort1 = SERVERPORT1,
+        .server2 = SERVER2,
+        .serverPort2 = SERVERPORT2,
+        .caCert = ca_cert,
+        .mqttClient = &mqttClient,
+        .wifiClient = &wifiClient,
+        .secureClient = &secureClient,
+        .mqttCallback = mqttCallback,
+        .topics = {
+            .image = TOPIC_IMAGE,
+            .power = TOPIC_POWER,
+            .energy = TOPIC_ENERGY
+        }
+    };
+    netInit(netCfg);
+    Serial.println("Network module initialized");
+
+    // Initialize image fetcher
+    Serial.println("Initializing image fetcher...");
+    ImageFetcherConfig imgCfg = {
+        .screenWidth = SCREEN_WIDTH,
+        .screenHeight = SCREEN_HEIGHT,
+        .screen1 = ui_Screen1,
+        .screen2 = ui_Screen2,
+        .imgScreen2Background = ui_imgScreen2Background
+    };
+    imageFetcherInit(imgCfg);
+    Serial.println("Image fetcher initialized");
+
+    // Connect to WiFi
+    initWiFi();
+
+    // Initialize MQTT
+    initMQTT();
+
+    Serial.println("=== Setup Complete ===\n");
 }
 
-//*****************************************************************************************
-// Loads the next image from the SD card, decodes it, and updates the display.
-void show_new_pic() {
-  if (pic_img_data == NULL || img_read_data == NULL) {
-      esp_rom_printf("Skipping show_new_pic: memory not allocated\n");
-      return;
-  }
-  if (v_fileContent.size() > 0)
-  {
-    const char *s = (const char *)v_fileContent[curr_show_index];
-    esp_rom_printf("showing %s\n", s);
-    memset(img_read_data, 0, MAX_PIC_FILE_SIZE);
-    File loadFile;
-    loadFile = SD_MMC.open(s, FILE_READ);
-    if (!loadFile)
-    {
-      return;
+// ============================================================================
+// Main Loop
+// ============================================================================
+
+void loop() {
+    // Check WiFi connection periodically
+    if (millis() - lastWiFiCheck > WIFI_CHECK_INTERVAL) {
+        lastWiFiCheck = millis();
+        checkWiFi();
     }
 
-    char buff[1024];
-    size_t bytesRead = 0;
-    while (loadFile.available() && bytesRead < MAX_PIC_FILE_SIZE)
-    {
-      size_t len = min((size_t)loadFile.available(), min(sizeof(buff), MAX_PIC_FILE_SIZE - bytesRead));
-      loadFile.read((uint8_t *)buff, len);
-      memcpy(img_read_data + bytesRead, buff, len);
-      bytesRead += len;
-    }
-    loadFile.close();
-
-    jpeg_error_t ret = JPEG_ERR_OK;
-
-    ret = esp_jpeg_decoder_one_image(img_read_data, bytesRead, (uint8_t *)pic_img_data);
-    if (ret != JPEG_ERR_OK)
-    {
-      esp_rom_printf("JPEG decode failed - %d\n", (int)ret);
-      return;
+    // Process MQTT if connected
+    if (WiFi.status() == WL_CONNECTED) {
+        mqttClient.loop();
+        netCheckMqtt();
     }
 
+    // Process image fetcher
+    imageFetcherLoop();
+
+    // Small delay to prevent watchdog issues
+    delay(5);
+}
+
+// ============================================================================
+// WiFi Functions
+// ============================================================================
+
+void initWiFi() {
+    Serial.println("Connecting to WiFi...");
+
+    // Update UI
     bsp_display_lock(0);
-    lv_obj_invalidate(img_obj);
+    if (ui_labelConnectionStatus) {
+        lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
+    }
     bsp_display_unlock();
 
-    curr_show_index--;
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid1, password1);
+    currentWiFiNetwork = 1;
 
-    if (curr_show_index < 0)
-    {
-      curr_show_index = v_fileContent.size() - 1;
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
     }
-  }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.printf("\nConnected to %s\n", ssid1);
+        Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+    } else {
+        Serial.println("\nPrimary WiFi failed, trying secondary...");
+        WiFi.begin(ssid2, password2);
+        currentWiFiNetwork = 2;
+
+        attempts = 0;
+        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+            delay(500);
+            Serial.print(".");
+            attempts++;
+        }
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.printf("\nConnected to %s\n", ssid2);
+            Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+        } else {
+            Serial.println("\nWiFi connection failed!");
+        }
+    }
+
+    updateConnectionStatus();
 }
 
-//*****************************************************************************************
-// Recursively searches for files in the specified directory and adds them to the list.
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  esp_rom_printf("Listing directory: %s\n", dirname);
-
-  File root = fs.open(dirname);
-  if (!root)
-  {
-    esp_rom_printf("Failed to open directory\n");
-    return;
-  }
-  if (!root.isDirectory())
-  {
-    esp_rom_printf("Not a directory\n");
-    return;
-  }
-
-  File file = root.openNextFile();
-  while (file)
-  {
-    if (file.isDirectory())
-    {
-      if (levels)
-      {
-        listDir(fs, file.path(), levels - 1);
-      }
+void checkWiFi() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WiFi disconnected, reconnecting...");
+        initWiFi();
     }
-    else
-    {
-      v_fileContent.insert(v_fileContent.begin(), strdup(file.path()));
-    }
-    file = root.openNextFile();
-  }
-  esp_rom_printf("found files : %d\n", v_fileContent.size());
-  root.close();
-  file.close();
 }
 
-//*****************************************************************************************
-// Initializes hardware components, display, SD card, and loads the initial image.
-void setup() {
-  String title = "LVGL porting example";
+// ============================================================================
+// MQTT Functions
+// ============================================================================
 
-  Serial.begin(115200);
-  
-  delay(3000); // Give serial monitor time to catch up: 1000
-  esp_rom_printf("\n\n--- System Info ---\n");
-  esp_rom_printf("Model: %s\n", ESP.getChipModel());
-  esp_rom_printf("Heap Size: %d, Free: %d\n", ESP.getHeapSize(), ESP.getFreeHeap());
-  esp_rom_printf("PSRAM Size: %d, Free: %d\n", ESP.getPsramSize(), ESP.getFreePsram());
-  esp_rom_printf("-------------------\n");
+void initMQTT() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("Cannot init MQTT - WiFi not connected");
+        return;
+    }
 
-  esp_rom_printf("Initialize tf card\n");
-  SD_MMC.setPins(SD_MMC_CLK, SD_MMC_CMD, SD_MMC_D0);
-  if (!SD_MMC.begin("/sdmmc", true, false, 20000))
-  {
-    esp_rom_printf("Card Mount Failed\n");
-    while (1)
-    {
-    };
-  }
+    Serial.println("Initializing MQTT...");
 
-  esp_rom_printf("Initialize panel device\n");
-  uint32_t buffer_size = EXAMPLE_LCD_QSPI_H_RES * EXAMPLE_LCD_QSPI_V_RES;
-  if (!psramFound()) {
-      buffer_size = EXAMPLE_LCD_QSPI_H_RES * EXAMPLE_LCD_QSPI_V_RES / 10;
-  }
+    // Configure MQTT client based on current network
+    netConfigureMqttClient(currentWiFiNetwork);
 
-  bsp_display_cfg_t cfg = {
-      .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
-      .buffer_size = buffer_size,
-#if LVGL_PORT_ROTATION_DEGREE == 90
-      .rotate = LV_DISP_ROT_90,
-#elif LVGL_PORT_ROTATION_DEGREE == 270
-      .rotate = LV_DISP_ROT_270,
-#elif LVGL_PORT_ROTATION_DEGREE == 180
-      .rotate = LV_DISP_ROT_180,
-#elif LVGL_PORT_ROTATION_DEGREE == 0
-      .rotate = LV_DISP_ROT_NONE,
-#endif
-  };
+    // Attempt initial connection
+    netCheckMqtt(true);  // Bypass rate limit for initial connection
 
-  bsp_display_start_with_config(&cfg);
-  bsp_display_backlight_on();
-
-  pic_img_data = (uint16_t *)heap_caps_aligned_alloc(16, 480 * 320 * 2, MALLOC_CAP_SPIRAM);
-  if (!pic_img_data) {
-      pic_img_data = (uint16_t *)malloc(480 * 320 * 2);
-  }
-  if (pic_img_data) {
-      memset(pic_img_data, 0, 480 * 320 * 2);
-  } else {
-      esp_rom_printf("Failed to allocate pic_img_data\n");
-  }
-
-  img_read_data = (uint8_t *)heap_caps_malloc(MAX_PIC_FILE_SIZE, MALLOC_CAP_SPIRAM);
-  if (!img_read_data) {
-      img_read_data = (uint8_t *)malloc(MAX_PIC_FILE_SIZE);
-  }
-  if (img_read_data) {
-      memset(img_read_data, 0, MAX_PIC_FILE_SIZE);
-  } else {
-      esp_rom_printf("Failed to allocate img_read_data\n");
-  }
-
-  pic_img_dsc.data = (uint8_t *)pic_img_data;
-  bsp_display_lock(0);
-  img_obj = lv_img_create(lv_scr_act());
-  lv_img_set_src(img_obj, &pic_img_dsc);
-  lv_obj_center(img_obj);
-  bsp_display_unlock();
-
-  dir = SD_MMC.open(picDir);
-  listDir(SD_MMC, picDir, 1);
-
-  if (v_fileContent.size() > 0) {
-    curr_show_index = v_fileContent.size() - 1;
-  }
-  show_new_pic();
-
+    updateConnectionStatus();
 }
 
-//*****************************************************************************************
-// Main execution loop for image cycling and yielding.
-void loop() {
-  if (millis() - last_display_time >= IMAGE_CYCLE_DELAY_MS) {
-    last_display_time = millis();
-    show_new_pic();
-  }
-  delay(1);
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+    // Null-terminate the payload
+    char message[length + 1];
+    memcpy(message, payload, length);
+    message[length] = '\0';
+
+    Serial.printf("MQTT [%s]: %s\n", topic, message);
+
+    // Handle power topic
+    if (strcmp(topic, TOPIC_POWER) == 0) {
+        bsp_display_lock(0);
+        if (ui_labelPowerValue) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%s kW", message);
+            lv_label_set_text(ui_labelPowerValue, buf);
+        }
+        bsp_display_unlock();
+    }
+    // Handle energy topic
+    else if (strcmp(topic, TOPIC_ENERGY) == 0) {
+        bsp_display_lock(0);
+        if (ui_labelEnergyValue) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%s kWh", message);
+            lv_label_set_text(ui_labelEnergyValue, buf);
+        }
+        bsp_display_unlock();
+    }
+    // Handle image topic
+    else if (strcmp(topic, TOPIC_IMAGE) == 0) {
+        Serial.println("Image request received via MQTT");
+        requestLatestImage();
+    }
+}
+
+// ============================================================================
+// UI Update Functions
+// ============================================================================
+
+void updateConnectionStatus() {
+    bsp_display_lock(0);
+
+    if (ui_labelConnectionStatus) {
+        if (WiFi.status() != WL_CONNECTED) {
+            lv_label_set_text(ui_labelConnectionStatus, "WiFi: Disconnected");
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFF0000), LV_PART_MAIN);
+        } else if (!netIsMqttConnected()) {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: ...", WiFi.SSID().c_str());
+            lv_label_set_text(ui_labelConnectionStatus, buf);
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
+        } else {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: OK", WiFi.SSID().c_str());
+            lv_label_set_text(ui_labelConnectionStatus, buf);
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0x00FF00), LV_PART_MAIN);
+        }
+    }
+
+    // Show/hide activity spinner based on MQTT connection
+    if (ui_ActivitySpinner) {
+        if (netIsMqttConnected()) {
+            lv_obj_add_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+
+    bsp_display_unlock();
 }
