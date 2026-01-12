@@ -194,12 +194,12 @@ void updateConnectionStatus() {
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFF0000), LV_PART_MAIN);
         } else if (!netIsMqttConnected()) {
             char buf[64];
-            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: ...", WiFi.SSID().c_str());
+            snprintf(buf, sizeof(buf), "IP: %s | MQTT: ...", WiFi.localIP().toString().c_str());
             lv_label_set_text(ui_labelConnectionStatus, buf);
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
         } else {
             char buf[64];
-            snprintf(buf, sizeof(buf), "WiFi: %s | MQTT: OK", WiFi.SSID().c_str());
+            snprintf(buf, sizeof(buf), "IP: %s | MQTT: OK", WiFi.localIP().toString().c_str());
             lv_label_set_text(ui_labelConnectionStatus, buf);
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0x00FF00), LV_PART_MAIN);
         }
