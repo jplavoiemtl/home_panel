@@ -50,6 +50,8 @@ unsigned long lastWiFiCheck = 0;
 constexpr unsigned long WIFI_CHECK_INTERVAL = 10000;  // 10 seconds
 unsigned long lastStatusUpdate = 0;
 constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
+unsigned long lastHeapLog = 0;
+constexpr unsigned long HEAP_LOG_INTERVAL = 300000;  // 5 minutes
 
 // WiFi state
 int currentWiFiNetwork = 1;  // 1 = primary (ssid1), 2 = secondary (ssid2)
@@ -63,6 +65,7 @@ void checkWiFi();
 void initMQTT();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 void updateConnectionStatus();
+void logHeapStatus();
 
 
 // ============================================================================
@@ -149,6 +152,9 @@ void initMQTT() {
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
+    // Reset watchdog - we received a message, connection is alive
+    netMqttMessageReceived();
+
     // Null-terminate the payload
     char message[length + 1];
     memcpy(message, payload, length);
@@ -217,6 +223,17 @@ void updateConnectionStatus() {
     }
 
     bsp_display_unlock();
+}
+
+// ============================================================================
+// Diagnostics Functions
+// ============================================================================
+
+void logHeapStatus() {
+    Serial.printf("[HEAP] Free: %d | Min: %d | PSRAM Free: %d\n",
+                  ESP.getFreeHeap(),
+                  ESP.getMinFreeHeap(),
+                  ESP.getFreePsram());
 }
 
 // ============================================================================
@@ -324,10 +341,17 @@ void loop() {
     if (WiFi.status() == WL_CONNECTED) {
         mqttClient.loop();
         netCheckMqtt();
+        netCheckWatchdog();  // Detect stale connections
     }
 
     // Process image fetcher
     imageFetcherLoop();
+
+    // Periodic heap logging for memory leak detection
+    if (millis() - lastHeapLog > HEAP_LOG_INTERVAL) {
+        lastHeapLog = millis();
+        logHeapStatus();
+    }
 
     // Update connection status periodically
     if (millis() - lastStatusUpdate > STATUS_UPDATE_INTERVAL) {
