@@ -48,6 +48,8 @@ PubSubClient mqttClient;
 // Timing
 unsigned long lastWiFiCheck = 0;
 constexpr unsigned long WIFI_CHECK_INTERVAL = 10000;  // 10 seconds
+unsigned long lastStatusUpdate = 0;
+constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
 
 // WiFi state
 int currentWiFiNetwork = 1;  // 1 = primary (ssid1), 2 = secondary (ssid2)
@@ -118,6 +120,10 @@ void checkWiFi() {
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi disconnected, reconnecting...");
         initWiFi();
+        // Reconfigure and reconnect MQTT after WiFi reconnection
+        if (WiFi.status() == WL_CONNECTED) {
+            initMQTT();
+        }
     }
 }
 
@@ -322,6 +328,12 @@ void loop() {
 
     // Process image fetcher
     imageFetcherLoop();
+
+    // Update connection status periodically
+    if (millis() - lastStatusUpdate > STATUS_UPDATE_INTERVAL) {
+        lastStatusUpdate = millis();
+        updateConnectionStatus();
+    }
 
     // Small delay to prevent watchdog issues
     delay(5);
