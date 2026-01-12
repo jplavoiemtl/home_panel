@@ -17,6 +17,10 @@ build/
 squareline/
 ui/
 
+# SquareLine Studio generated files (not needed for Arduino builds)
+CMakeLists.txt
+filelist.txt
+
 # VSCode settings
 .vscode/
 sketch.yaml
