@@ -3,6 +3,3 @@
 // LVGL version: 8.3.11
 // Project name: homepanel
 
-// Custom code has been moved to src/ui_custom.c and src/ui_custom.h
-// Those files are NOT overwritten by SquareLine Studio exports
-
