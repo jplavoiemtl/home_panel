@@ -12,7 +12,7 @@
 #endif
 #include "ui.h"
 #include "esp_bsp.h"  // For bsp_display_lock/unlock
-extern lv_obj_t* ui_previous_screen;
+#include "../ui_custom.h"  // Custom UI extensions (not overwritten by SquareLine Studio)
 
 // Use Serial for debug output
 #define USBSerial Serial
