@@ -138,12 +138,8 @@ static void prepareForRequest() {
        ui_previous_screen = cfg.screen1;
   }
 
-
-  // Force rotation to default (90 degrees) for the UI/Loading state
-  lv_disp_t* disp = lv_disp_get_default();
-  if (disp) {
-    lv_disp_set_rotation(disp, LV_DISP_ROT_90);
-  }
+  // Note: Rotation should already be at 90 degrees (restored by SCREEN_UNLOAD_START)
+  // Don't call lv_disp_set_rotation() here as it triggers unnecessary redraw
 
   // Reset loading timeout state
   screenTransitionTime = millis();
@@ -395,8 +391,17 @@ static void processHTTPResponse() {
       return;
     }
 
+    // Clear buffer to black before decoding (prevents garbage if image doesn't fill screen)
+    memset(image_buffer_psram, 0, imageBufferSize);
+
     TJpgDec.setJpgScale(1);
     TJpgDec.setCallback(tft_output);
+
+    // Get JPEG dimensions for debugging
+    uint16_t jpgWidth = 0, jpgHeight = 0;
+    TJpgDec.getJpgSize(&jpgWidth, &jpgHeight, jpeg_buffer_psram, jpeg_buffer_size);
+    USBSerial.printf("JPEG dimensions: %dx%d, Screen: %dx%d\n",
+                     jpgWidth, jpgHeight, cfg.screenWidth, cfg.screenHeight);
 
     uint8_t result = TJpgDec.drawJpg(0, 0, jpeg_buffer_psram, jpeg_buffer_size);
 
@@ -412,7 +417,11 @@ static void processHTTPResponse() {
 
     USBSerial.println("JPEG decoded successfully into PSRAM.");
 
-    // Don't change rotation - keep at 90 degrees for Home Panel display
+    // Disable rotation for raw image display (image is already in correct 480x320 landscape format)
+    lv_disp_t* disp = lv_disp_get_default();
+    if (disp) {
+      lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
+    }
 
     img_dsc.header.always_zero = 0;
     img_dsc.header.w = cfg.screenWidth;
@@ -503,7 +512,10 @@ void screen2_event_handler(lv_event_t* e) {
       if (cfg.imgScreen2Background) {
         lv_obj_set_style_opa(cfg.imgScreen2Background, LV_OPA_COVER, LV_PART_MAIN);
       }
-      // Don't change rotation - keep at 90 degrees
+      // Set rotation to NONE for raw image display
+      if (disp) {
+        lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
+      }
     }
     screenTransitionTime = millis();
     screen2TimeoutActive = true;
@@ -539,7 +551,11 @@ void screen2_event_handler(lv_event_t* e) {
     }
     memset(&img_dsc, 0, sizeof(lv_img_dsc_t));
     requestInProgress = false;
-    // Rotation stays at 90 degrees - no change needed
+
+    // Restore rotation to 90 degrees for normal UI display
+    if (disp) {
+      lv_disp_set_rotation(disp, LV_DISP_ROT_90);
+    }
 
     // Clear cleanup flag
     cleanupInProgress = false;

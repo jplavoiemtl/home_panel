@@ -176,6 +176,7 @@ home_panel/
 ### 4.1 Main Sketch (`home_panel.ino`)
 
 **Responsibilities:**
+
 - Hardware initialization (display, touch, I2C)
 - LVGL initialization and configuration
 - Module initialization (net, image_fetcher)
@@ -185,6 +186,7 @@ home_panel/
 - UI event handling setup
 
 **Key Functions:**
+
 - `setup()` - Initialize all hardware and modules
 - `loop()` - Call module update functions, handle LVGL
 - `initWiFi()` - Connect to WiFi network
@@ -194,6 +196,7 @@ home_panel/
 ### 4.2 Network Module (`src/net/`)
 
 **Responsibilities:**
+
 - MQTT client management
 - Dual-server failover (primary/secondary)
 - Connection monitoring and reconnection
@@ -201,6 +204,7 @@ home_panel/
 - Secure/non-secure connection handling
 
 **API:**
+
 ```cpp
 void netInit(const NetConfig& config);
 void netConfigureMqttClient(PubSubClient* client);
@@ -210,6 +214,7 @@ bool netHasInitialMqttSuccess();
 ```
 
 **Configuration:**
+
 ```cpp
 struct NetConfig {
     const char* primaryServer;
@@ -226,6 +231,7 @@ struct NetConfig {
 ### 4.3 Image Fetcher Module (`src/image/`)
 
 **Responsibilities:**
+
 - HTTP/HTTPS image retrieval
 - JPEG decoding to RGB565
 - LVGL image widget update
@@ -233,6 +239,7 @@ struct NetConfig {
 - Memory management for image buffers
 
 **API:**
+
 ```cpp
 void imageFetcherInit(const ImageFetcherConfig& config);
 void imageFetcherLoop();
@@ -242,6 +249,7 @@ void onButtonNewPressed(lv_event_t* e);
 ```
 
 **Configuration:**
+
 ```cpp
 struct ImageFetcherConfig {
     uint16_t screenWidth;
@@ -256,12 +264,14 @@ struct ImageFetcherConfig {
 ### 4.4 Screen Memory Module (`src/screen_memory/`) - Optional
 
 **Responsibilities:**
+
 - Track currently active screen
 - Persist screen ID to NVS
 - Restore last screen on boot
 - Debounce writes to prevent NVS wear
 
 **API:**
+
 ```cpp
 void screenMemoryInit(const ScreenMemoryConfig& config);
 void screenMemoryUpdate();
@@ -398,12 +408,14 @@ ui_Screen2
 ### 7.3 Build Commands
 
 **Arduino CLI:**
+
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32s3 home_panel
 arduino-cli upload --fqbn esp32:esp32:esp32s3 -p COM_PORT home_panel
 ```
 
 **PlatformIO:**
+
 ```bash
 pio run
 pio run --target upload
@@ -471,6 +483,7 @@ extern const char* IMAGE_SERVER_URL;
 ### 9.3 `lv_conf.h` (LVGL Configuration)
 
 Key settings:
+
 - Color depth: 16-bit (RGB565)
 - Memory: Use PSRAM for large allocations
 - Fonts: Built-in fonts enabled
