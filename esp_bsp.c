@@ -86,6 +86,9 @@ static esp_lcd_panel_handle_t panel_handle = NULL;
 
 static bool i2c_initialized = false;
 
+// I2C mutex for protecting touch operations
+SemaphoreHandle_t i2c_mutex = NULL;
+
 esp_err_t bsp_i2c_init(void)
 {
     /* I2C was initialized before */
@@ -103,6 +106,14 @@ esp_err_t bsp_i2c_init(void)
     };
     BSP_ERROR_CHECK_RETURN_ERR(i2c_param_config(BSP_I2C_NUM, &i2c_conf));
     BSP_ERROR_CHECK_RETURN_ERR(i2c_driver_install(BSP_I2C_NUM, i2c_conf.mode, 0, 0, 0));
+
+    // Create I2C mutex for protecting touch operations
+    if (i2c_mutex == NULL) {
+        i2c_mutex = xSemaphoreCreateRecursiveMutex();
+        if (i2c_mutex == NULL) {
+            ESP_LOGW(TAG, "Failed to create I2C mutex");
+        }
+    }
 
     i2c_initialized = true;
 

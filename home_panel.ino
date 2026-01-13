@@ -36,6 +36,10 @@
 #define TOPIC_POWER "ha/hilo_meter_power"
 #define TOPIC_ENERGY "hilo_energie"
 
+// Display backlight timeout (for testing)
+constexpr unsigned long BACKLIGHT_OFF_AFTER_MS = 30000;  // Turn off after 30 seconds
+constexpr unsigned long BACKLIGHT_OFF_DURATION_MS = 10000;  // Stay off for 10 seconds
+
 // ============================================================================
 // Global Objects
 // ============================================================================
@@ -52,6 +56,11 @@ unsigned long lastStatusUpdate = 0;
 constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
 unsigned long lastHeapLog = 0;
 constexpr unsigned long HEAP_LOG_INTERVAL = 300000;  // 5 minutes
+
+// Backlight state (for testing)
+bool backlightTestDone = false;
+bool backlightOff = false;
+unsigned long backlightOffTime = 0;
 
 // WiFi state
 int currentWiFiNetwork = 1;  // 1 = primary (ssid1), 2 = secondary (ssid2)
@@ -341,6 +350,21 @@ void loop() {
     if (millis() - lastStatusUpdate > STATUS_UPDATE_INTERVAL) {
         lastStatusUpdate = millis();
         updateConnectionStatus();
+    }
+
+    // Backlight timeout test cycle (one-time test)
+    if (!backlightTestDone) {
+        if (!backlightOff && millis() > BACKLIGHT_OFF_AFTER_MS) {
+            Serial.println("Backlight test - turning OFF display");
+            bsp_display_backlight_off();
+            backlightOff = true;
+            backlightOffTime = millis();
+        }
+        if (backlightOff && millis() - backlightOffTime > BACKLIGHT_OFF_DURATION_MS) {
+            Serial.println("Backlight test - turning ON display");
+            bsp_display_backlight_on();
+            backlightTestDone = true;  // Test complete, won't run again
+        }
     }
 
     // Small delay to prevent watchdog issues and yield to other tasks

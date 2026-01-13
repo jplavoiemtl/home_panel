@@ -18,6 +18,7 @@
 
 #include "lv_port.h"
 #include "lvgl.h"
+#include "esp_bsp.h"
 
 #ifdef ESP_LVGL_PORT_TOUCH_COMPONENT
 #include "esp_lcd_touch.h"
@@ -576,24 +577,34 @@ static void lvgl_port_touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *
     uint16_t touchpad_y[1] = {0};
     uint8_t touchpad_cnt = 0;
 
-    /* Read data from touch controller into memory */
+    /* Check if touch interrupt occurred */
     bool touch_int = false;
     if (touch_ctx->touch_wait_cb) {
         touch_int = touch_ctx->touch_wait_cb(touch_ctx->handle->config.user_data);
     }
-    if (touch_int) {
-        esp_lcd_touch_read_data(touch_ctx->handle);
-        /* Read data from touch controller */
-        bool touchpad_pressed = esp_lcd_touch_get_coordinates(touch_ctx->handle, touchpad_x, touchpad_y, NULL, &touchpad_cnt, 1);
 
-        if (touchpad_pressed && touchpad_cnt > 0) {
-            data->point.x = touchpad_x[0];
-            data->point.y = touchpad_y[0];
-            data->state = LV_INDEV_STATE_PRESSED;
-            //esp_rom_printf("Touchpad pressed: x=%d, y=%d\n", data->point.x, data->point.y);
-        } else {
-            data->state = LV_INDEV_STATE_RELEASED;
+    if (touch_int) {
+        /* START I2C MUTEX PROTECTION - prevents race conditions on I2C bus */
+        if (i2c_mutex && xSemaphoreTakeRecursive(i2c_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+            /* Read data from touch controller into memory */
+            esp_lcd_touch_read_data(touch_ctx->handle);
+
+            /* Get touch coordinates */
+            bool touchpad_pressed = esp_lcd_touch_get_coordinates(touch_ctx->handle, touchpad_x, touchpad_y, NULL, &touchpad_cnt, 1);
+
+            xSemaphoreGiveRecursive(i2c_mutex);
+            /* END I2C MUTEX PROTECTION */
+
+            /* Ghost touch filter: only process if valid touch count */
+            if (touchpad_pressed && touchpad_cnt > 0) {
+                data->point.x = touchpad_x[0];
+                data->point.y = touchpad_y[0];
+                data->state = LV_INDEV_STATE_PRESSED;
+            } else {
+                data->state = LV_INDEV_STATE_RELEASED;
+            }
         }
+        /* If mutex acquisition fails, skip this touch read (non-blocking fallback) */
     }
 }
 #endif

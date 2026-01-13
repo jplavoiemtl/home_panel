@@ -15,8 +15,13 @@
 #include "sdkconfig.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "lvgl.h"
 #include "lv_port.h"
+
+// I2C mutex for protecting touch I2C operations
+extern SemaphoreHandle_t i2c_mutex;
 
 /**************************************************************************************************
  *  pinout
@@ -115,6 +120,28 @@ bool bsp_display_lock(uint32_t timeout_ms);
  *
  */
 void bsp_display_unlock(void);
+
+/**
+ * @brief Set display backlight brightness
+ *
+ * @param brightness_percent Brightness level (0-100)
+ * @return ESP_OK on success
+ */
+esp_err_t bsp_display_brightness_set(int brightness_percent);
+
+/**
+ * @brief Turn off display backlight
+ *
+ * @return ESP_OK on success
+ */
+esp_err_t bsp_display_backlight_off(void);
+
+/**
+ * @brief Turn on display backlight (100%)
+ *
+ * @return ESP_OK on success
+ */
+esp_err_t bsp_display_backlight_on(void);
 
 #ifdef __cplusplus
 }
