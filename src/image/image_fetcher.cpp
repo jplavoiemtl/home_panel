@@ -270,15 +270,11 @@ static bool requestImage(const char* endpoint_type) {
 
   httpState = HTTP_REQUESTING;
   USBSerial.println("Sending HTTP GET...");
-  USBSerial.printf("WiFi status: %d, RSSI: %d dBm\n", WiFi.status(), WiFi.RSSI());
 
   int httpCode = httpClient.GET();
 
   if (httpCode != HTTP_CODE_OK) {
     USBSerial.printf("FATAL: HTTP GET failed with code: %d\n", httpCode);
-    if (httpCode < 0) {
-      USBSerial.println("Error codes: -1=REFUSED, -2=SEND_HDR, -3=SEND_PAYLOAD, -4=NOT_CONNECTED, -5=CONN_LOST, -11=READ_TIMEOUT");
-    }
     httpClient.end();
     httpState = HTTP_ERROR;
     return false;
