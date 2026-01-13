@@ -10,29 +10,9 @@ bool mqttSuccess = false;
 unsigned long lastMqttAttempt = 0;
 constexpr unsigned long MQTT_RECONNECT_INTERVAL = 15000;  // 15s between reconnection attempts
 
-// MQTT Watchdog - detect stale connections
-unsigned long lastMqttMessage = 0;
-constexpr unsigned long MQTT_WATCHDOG_TIMEOUT = 300000;  // 5 minutes without message = stale
-
 // Helper to decide if port is secure
 bool isSecurePort(uint16_t port) {
   return port == 9735 || port == 8883;
-}
-
-// Internal helper to force MQTT reconnect
-void forceReconnect() {
-  if (!cfg.mqttClient) return;
-
-  Serial.println("=== MQTT WATCHDOG TRIGGERED ===");
-  unsigned long timeSinceLastMessage = millis() - lastMqttMessage;
-  Serial.printf("No MQTT message for %lu seconds\n", timeSinceLastMessage / 1000);
-  Serial.println("Connection appears stale, forcing reconnect...");
-
-  cfg.mqttClient->disconnect();
-  delay(100);
-
-  // Reset watchdog timer to avoid repeated triggers
-  lastMqttMessage = millis();
 }
 
 }  // namespace
@@ -105,23 +85,4 @@ bool netIsMqttConnected() {
 
 bool netHasInitialMqttSuccess() {
   return mqttSuccess;
-}
-
-void netMqttMessageReceived() {
-  // Reset watchdog timer - we received a message, connection is alive
-  lastMqttMessage = millis();
-}
-
-void netCheckWatchdog() {
-  // Skip if we haven't received any message yet (still initializing)
-  if (lastMqttMessage == 0) return;
-
-  // Skip if not supposed to be connected
-  if (!cfg.mqttClient || !cfg.mqttClient->connected()) return;
-
-  unsigned long timeSinceLastMessage = millis() - lastMqttMessage;
-
-  if (timeSinceLastMessage > MQTT_WATCHDOG_TIMEOUT) {
-    forceReconnect();
-  }
 }

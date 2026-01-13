@@ -150,9 +150,6 @@ void initMQTT() {
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-    // Reset watchdog - we received a message, connection is alive
-    netMqttMessageReceived();
-
     // Null-terminate the payload
     char message[length + 1];
     memcpy(message, payload, length);
@@ -329,7 +326,6 @@ void loop() {
     if (WiFi.status() == WL_CONNECTED) {
         mqttClient.loop();
         netCheckMqtt();
-        netCheckWatchdog();  // Detect stale connections
     }
 
     // Process image fetcher

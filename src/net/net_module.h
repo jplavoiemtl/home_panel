@@ -39,7 +39,3 @@ void netCheckMqtt(bool bypassRateLimit = false);
 // Accessors
 bool netIsMqttConnected();
 bool netHasInitialMqttSuccess();
-
-// Watchdog functions - detect and recover from stale MQTT connections
-void netMqttMessageReceived();  // Call from mqttCallback to reset watchdog timer
-void netCheckWatchdog();        // Call periodically to check for stale connections
