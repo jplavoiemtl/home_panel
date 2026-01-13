@@ -357,7 +357,7 @@ static lv_disp_t *bsp_display_lcd_init(const bsp_display_cfg_t *cfg)
         .hres = hres,
         .vres = vres,
         .trans_size = hres * vres / 10,
-        .draw_wait_cb = bsp_display_sync_cb,
+        .draw_wait_cb = NULL,  // Disabled for single-threaded LVGL (was bsp_display_sync_cb)
         .flags = {
             .buff_dma = false,
             .buff_spiram = heap_caps_get_free_size(MALLOC_CAP_SPIRAM) > 0,

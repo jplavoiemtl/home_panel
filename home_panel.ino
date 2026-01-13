@@ -75,12 +75,9 @@ void logHeapStatus();
 void initWiFi() {
     Serial.println("Connecting to WiFi...");
 
-    // Update UI (100ms timeout to prevent deadlock)
-    if (bsp_display_lock(100)) {
-        if (ui_labelConnectionStatus) {
-            lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
-        }
-        bsp_display_unlock();
+    // Update UI (single-threaded mode, no lock needed)
+    if (ui_labelConnectionStatus) {
+        lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
     }
 
     WiFi.mode(WIFI_STA);
@@ -165,24 +162,18 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     // Handle power topic
     if (strcmp(topic, TOPIC_POWER) == 0) {
-        if (bsp_display_lock(100)) {
-            if (ui_labelPowerValue) {
-                char buf[32];
-                snprintf(buf, sizeof(buf), "%s kW", message);
-                lv_label_set_text(ui_labelPowerValue, buf);
-            }
-            bsp_display_unlock();
+        if (ui_labelPowerValue) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%s kW", message);
+            lv_label_set_text(ui_labelPowerValue, buf);
         }
     }
     // Handle energy topic
     else if (strcmp(topic, TOPIC_ENERGY) == 0) {
-        if (bsp_display_lock(100)) {
-            if (ui_labelEnergyValue) {
-                char buf[32];
-                snprintf(buf, sizeof(buf), "%s", message);
-                lv_label_set_text(ui_labelEnergyValue, buf);
-            }
-            bsp_display_unlock();
+        if (ui_labelEnergyValue) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%s", message);
+            lv_label_set_text(ui_labelEnergyValue, buf);
         }
     }
     // Handle image topic
@@ -197,11 +188,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // ============================================================================
 
 void updateConnectionStatus() {
-    // Use 100ms timeout to prevent deadlock if LVGL is busy
-    if (!bsp_display_lock(100)) {
-        return;  // Skip this update, try again next cycle
-    }
-
+    // Single-threaded mode: no lock needed
     if (ui_labelConnectionStatus) {
         if (WiFi.status() != WL_CONNECTED) {
             lv_label_set_text(ui_labelConnectionStatus, "WiFi: Disconnected");
@@ -223,8 +210,6 @@ void updateConnectionStatus() {
     if (ui_ActivitySpinner) {
         lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
     }
-
-    bsp_display_unlock();
 }
 
 // ============================================================================
@@ -279,14 +264,9 @@ void setup() {
     bsp_display_backlight_on();
     Serial.println("Display initialized");
 
-    // Initialize LVGL UI
+    // Initialize LVGL UI (single-threaded mode, no lock needed)
     Serial.println("Initializing UI...");
-    if (bsp_display_lock(1000)) {  // 1 second timeout for init
-        ui_init();
-        bsp_display_unlock();
-    } else {
-        Serial.println("ERROR: Failed to acquire display lock for UI init!");
-    }
+    ui_init();
     Serial.println("UI initialized");
 
     // Initialize network module
@@ -336,6 +316,9 @@ void setup() {
 // ============================================================================
 
 void loop() {
+    // Process LVGL - single-threaded mode, called directly from main loop
+    lv_timer_handler();
+
     // Check WiFi connection periodically
     if (millis() - lastWiFiCheck > WIFI_CHECK_INTERVAL) {
         lastWiFiCheck = millis();
@@ -364,6 +347,6 @@ void loop() {
         updateConnectionStatus();
     }
 
-    // Small delay to prevent watchdog issues
-    delay(5);
+    // Small delay to prevent watchdog issues and yield to other tasks
+    delay(2);
 }

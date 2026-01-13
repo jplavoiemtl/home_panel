@@ -7,7 +7,6 @@
 
 #include "secrets_private.h"
 #include "ui.h"
-#include "esp_bsp.h"  // For bsp_display_lock/unlock
 #include "../ui_custom.h"  // Custom UI extensions (not overwritten by SquareLine Studio)
 
 // Use Serial for debug output
@@ -422,17 +421,12 @@ static void processHTTPResponse() {
     img_dsc.data_size = cfg.screenWidth * cfg.screenHeight * LV_COLOR_DEPTH / 8;
     img_dsc.data = reinterpret_cast<const uint8_t*>(image_buffer_psram);
 
-    // Lock display before modifying LVGL objects (100ms timeout to prevent deadlock)
-    if (bsp_display_lock(100)) {
-      if (cfg.imgScreen2Background) {
-        lv_img_set_src(cfg.imgScreen2Background, &img_dsc);
-        lv_obj_set_style_opa(cfg.imgScreen2Background, LV_OPA_COVER, LV_PART_MAIN);
-      }
-      bsp_display_unlock();
-      USBSerial.println("LVGL image source updated.");
-    } else {
-      USBSerial.println("WARNING: Could not acquire display lock for image update");
+    // Update LVGL image (single-threaded mode, no lock needed)
+    if (cfg.imgScreen2Background) {
+      lv_img_set_src(cfg.imgScreen2Background, &img_dsc);
+      lv_obj_set_style_opa(cfg.imgScreen2Background, LV_OPA_COVER, LV_PART_MAIN);
     }
+    USBSerial.println("LVGL image source updated.");
 
     // Enable back button now that image is displayed
     ui_Screen2_setImageDisplayed(true);

@@ -103,21 +103,11 @@ esp_err_t lvgl_port_init(const lvgl_port_cfg_t *cfg)
     /* Tick init */
     lvgl_port_timer_period_ms = cfg->timer_period_ms;
     ESP_RETURN_ON_ERROR(lvgl_port_tick_init(), TAG, "");
-    /* Create task */
-    lvgl_port_ctx.task_max_sleep_ms = cfg->task_max_sleep_ms;
-    if (lvgl_port_ctx.task_max_sleep_ms == 0) {
-        lvgl_port_ctx.task_max_sleep_ms = 500;
-    }
-    lvgl_port_ctx.lvgl_mux = xSemaphoreCreateRecursiveMutex();
-    ESP_GOTO_ON_FALSE(lvgl_port_ctx.lvgl_mux, ESP_ERR_NO_MEM, err, TAG, "Create LVGL mutex fail!");
 
-    BaseType_t res;
-    if (cfg->task_affinity < 0) {
-        res = xTaskCreate(lvgl_port_task, "LVGL task", cfg->task_stack, NULL, cfg->task_priority, NULL);
-    } else {
-        res = xTaskCreatePinnedToCore(lvgl_port_task, "LVGL task", cfg->task_stack, NULL, cfg->task_priority, NULL, cfg->task_affinity);
-    }
-    ESP_GOTO_ON_FALSE(res == pdPASS, ESP_FAIL, err, TAG, "Create LVGL task fail!");
+    /* Single-threaded mode: No LVGL task created.
+     * lv_timer_handler() is called directly from main loop.
+     * This eliminates deadlock risks from mutex contention. */
+    lvgl_port_ctx.running = true;  // Mark as running for compatibility
 
 err:
     if (ret != ESP_OK) {
@@ -351,16 +341,15 @@ esp_err_t lvgl_port_remove_touch(lv_indev_t *touch)
 
 bool lvgl_port_lock(uint32_t timeout_ms)
 {
-    assert(lvgl_port_ctx.lvgl_mux && "lvgl_port_init must be called first");
-
-    const TickType_t timeout_ticks = (timeout_ms == 0) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
-    return xSemaphoreTakeRecursive(lvgl_port_ctx.lvgl_mux, timeout_ticks) == pdTRUE;
+    // Single-threaded mode: no locking needed
+    // LVGL is now called directly from main loop via lv_timer_handler()
+    (void)timeout_ms;
+    return true;
 }
 
 void lvgl_port_unlock(void)
 {
-    assert(lvgl_port_ctx.lvgl_mux && "lvgl_port_init must be called first");
-    xSemaphoreGiveRecursive(lvgl_port_ctx.lvgl_mux);
+    // Single-threaded mode: no unlocking needed
 }
 
 void lvgl_port_flush_ready(lv_disp_t *disp)
@@ -556,7 +545,8 @@ static void lvgl_port_flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, 
                 xSemaphoreGive(disp_ctx->trans_done_sem);
             }
 
-            xSemaphoreTake(disp_ctx->trans_done_sem, portMAX_DELAY);
+            // Use 100ms timeout instead of infinite wait to prevent deadlock
+            xSemaphoreTake(disp_ctx->trans_done_sem, pdMS_TO_TICKS(100));
             esp_lcd_panel_draw_bitmap(disp_ctx->panel_handle, x_draw_start, y_draw_start, x_draw_end + 1, y_draw_end + 1, to);
 
             if (LV_DISP_ROT_90 == rotate) {
