@@ -24,7 +24,7 @@ enum ImageRequestState {
 };
 
 // --- HTTP/S configuration ---
-constexpr unsigned long HTTP_TIMEOUT_MS = 15000;
+constexpr unsigned long HTTP_TIMEOUT_MS = 30000;  // 30 seconds for camera capture
 constexpr size_t MAX_JPEG_SIZE = 60000;  // 60 KB
 
 // --- Screen 2 timeout management ---
@@ -97,6 +97,7 @@ static void cleanupImageRequest() {
   // 1. Stop HTTP connections
   httpClient.end();
   httpsClient.stop();
+  delay(100);  // Give WiFi stack time to properly close connections
 
   // 2. Hide image if it exists to avoid LVGL accessing freed memory
   if (cfg.imgScreen2Background) {
@@ -269,10 +270,15 @@ static bool requestImage(const char* endpoint_type) {
 
   httpState = HTTP_REQUESTING;
   USBSerial.println("Sending HTTP GET...");
+  USBSerial.printf("WiFi status: %d, RSSI: %d dBm\n", WiFi.status(), WiFi.RSSI());
+
   int httpCode = httpClient.GET();
 
   if (httpCode != HTTP_CODE_OK) {
     USBSerial.printf("FATAL: HTTP GET failed with code: %d\n", httpCode);
+    if (httpCode < 0) {
+      USBSerial.println("Error codes: -1=REFUSED, -2=SEND_HDR, -3=SEND_PAYLOAD, -4=NOT_CONNECTED, -5=CONN_LOST, -11=READ_TIMEOUT");
+    }
     httpClient.end();
     httpState = HTTP_ERROR;
     return false;
