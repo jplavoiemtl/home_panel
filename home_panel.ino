@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiManager.h>          // https://github.com/tzapu/WiFiManager
 #include <PubSubClient.h>
 #include <lvgl.h>
 
@@ -54,14 +55,13 @@ constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
 unsigned long lastHeapLog = 0;
 constexpr unsigned long HEAP_LOG_INTERVAL = 300000;  // 5 minutes
 
-// WiFi state
-int currentWiFiNetwork = 1;  // 1 = primary (ssid1), 2 = secondary (ssid2)
-
 // ============================================================================
 // Forward Declarations
 // ============================================================================
 
-void initWiFi();
+void configModeCallback(WiFiManager *myWiFiManager);
+void restartESP();
+void initWiFiManager();
 void checkWiFi();
 void initMQTT();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
@@ -70,62 +70,73 @@ void logHeapStatus();
 
 
 // ============================================================================
-// WiFi Functions
+// WiFi Functions (WiFiManager)
 // ============================================================================
 
-void initWiFi() {
-    Serial.println("Connecting to WiFi...");
+// Callback when entering captive portal configuration mode
+void configModeCallback(WiFiManager *myWiFiManager) {
+    Serial.println("Entered WiFi configuration portal mode");
+    Serial.print("Connect to AP: ");
+    Serial.println(myWiFiManager->getConfigPortalSSID());
 
-    // Update UI (single-threaded mode, no lock needed)
+    // Update display to show portal mode
+    if (ui_labelConnectionStatus) {
+        lv_label_set_text(ui_labelConnectionStatus, "WiFi Portal Mode");
+        lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
+    }
+}
+
+// Restart ESP after WiFi failure - allows self-recovery when network returns
+void restartESP() {
+    Serial.println("WiFi connection failed, restarting in 10 seconds...");
+    delay(10000);
+    ESP.restart();
+}
+
+// Initialize WiFi using WiFiManager (captive portal for configuration)
+void initWiFiManager() {
+    Serial.println("Initializing WiFiManager...");
+
+    // Update UI
     if (ui_labelConnectionStatus) {
         lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
+        lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
     }
 
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid1, password1);
-    currentWiFiNetwork = 1;
+    WiFiManager wm;
 
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        delay(500);
-        Serial.print(".");
-        attempts++;
-    }
+    // Configuration portal timeout (3 minutes)
+    wm.setConfigPortalTimeout(180);
 
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.printf("\nConnected to %s\n", ssid1);
-        Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+    // Set callback for when entering config portal mode
+    wm.setAPCallback(configModeCallback);
+
+    // reset settings - wipe stored credentials for testing
+    // these are stored by the esp library
+    // wm.resetSettings();
+
+    // Attempt to connect using stored credentials, or start config portal
+    // AP name: "homepanel", password protected
+    bool res = wm.autoConnect("homepanel", "password");
+
+    if (!res) {
+        // WiFi connection failed after portal timeout
+        restartESP();
     } else {
-        Serial.println("\nPrimary WiFi failed, trying secondary...");
-        WiFi.begin(ssid2, password2);
-        currentWiFiNetwork = 2;
-
-        attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-            delay(500);
-            Serial.print(".");
-            attempts++;
-        }
-
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.printf("\nConnected to %s\n", ssid2);
-            Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
-        } else {
-            Serial.println("\nWiFi connection failed!");
-        }
+        // Connected successfully
+        Serial.println("Connected to WiFi");
+        Serial.printf("SSID: %s\n", WiFi.SSID().c_str());
+        Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
     }
 
     updateConnectionStatus();
 }
 
+// Check WiFi connection - restart-based recovery for reliability
 void checkWiFi() {
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi disconnected, reconnecting...");
-        initWiFi();
-        // Reconfigure and reconnect MQTT after WiFi reconnection
-        if (WiFi.status() == WL_CONNECTED) {
-            initMQTT();
-        }
+        Serial.println("WiFi disconnected, restarting for recovery...");
+        restartESP();
     }
 }
 
@@ -141,8 +152,9 @@ void initMQTT() {
 
     Serial.println("Initializing MQTT...");
 
-    // Configure MQTT client based on current network
-    netConfigureMqttClient(currentWiFiNetwork);
+    // Configure MQTT client for home network (connection 1)
+    // Phase C will add NVS-based auto-detection for home vs remote
+    netConfigureMqttClient(1);
 
     // Attempt initial connection
     netCheckMqtt(true);  // Bypass rate limit for initial connection
@@ -300,8 +312,8 @@ void setup() {
     imageFetcherInit(imgCfg);
     Serial.println("Image fetcher initialized");
 
-    // Connect to WiFi
-    initWiFi();
+    // Connect to WiFi using WiFiManager (captive portal for configuration)
+    initWiFiManager();
 
     // Initialize MQTT
     initMQTT();
