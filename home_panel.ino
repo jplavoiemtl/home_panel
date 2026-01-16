@@ -17,6 +17,7 @@
 // Module includes
 #include "src/net/net_module.h"
 #include "src/image/image_fetcher.h"
+#include "src/screen/screen_power.h"
 
 // Secrets (credentials)
 #include "secrets_private.h"
@@ -36,12 +37,6 @@
 #define TOPIC_POWER "ha/hilo_meter_power"
 #define TOPIC_ENERGY "hilo_energie"
 
-// Display backlight test timing (for testing brightness levels)
-constexpr unsigned long BACKLIGHT_OFF_AFTER_MS = 30000;      // Turn off after 30 seconds
-constexpr unsigned long BACKLIGHT_OFF_DURATION_MS = 10000;   // Stay off for 10 seconds
-constexpr unsigned long BACKLIGHT_DIM_DURATION_MS = 30000;   // Stay dim for 30 seconds
-constexpr int BACKLIGHT_DIM_PERCENT = 10;                    // Dim brightness level (0-100) 20
-
 // ============================================================================
 // Global Objects
 // ============================================================================
@@ -58,11 +53,6 @@ unsigned long lastStatusUpdate = 0;
 constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
 unsigned long lastHeapLog = 0;
 constexpr unsigned long HEAP_LOG_INTERVAL = 300000;  // 5 minutes
-
-// Backlight state (for testing)
-// States: 0=waiting, 1=off, 2=dim, 3=done
-int backlightTestState = 0;
-unsigned long backlightStateStartTime = 0;
 
 // WiFi state
 int currentWiFiNetwork = 1;  // 1 = primary (ssid1), 2 = secondary (ssid2)
@@ -269,7 +259,7 @@ void setup() {
     };
 
     bsp_display_start_with_config(&cfg);
-    bsp_display_backlight_on();
+    screenPowerInit();  // Initialize screen power manager (turns backlight on)
     Serial.println("Display initialized");
 
     // Initialize LVGL UI (single-threaded mode, no lock needed)
@@ -354,27 +344,8 @@ void loop() {
         updateConnectionStatus();
     }
 
-    // Backlight test cycle (one-time test after power up)
-    // States: 0=waiting for initial delay, 1=off, 2=dim (stays dim)
-    switch (backlightTestState) {
-        case 0:  // Waiting for initial delay
-            if (millis() > BACKLIGHT_OFF_AFTER_MS) {
-                Serial.println("Backlight test - turning OFF display");
-                bsp_display_backlight_off();
-                backlightTestState = 1;
-                backlightStateStartTime = millis();
-            }
-            break;
-        case 1:  // Display is off
-            if (millis() - backlightStateStartTime > BACKLIGHT_OFF_DURATION_MS) {
-                Serial.printf("Backlight test - setting DIM brightness (%d%%)\n", BACKLIGHT_DIM_PERCENT);
-                bsp_display_brightness_set(BACKLIGHT_DIM_PERCENT);
-                backlightTestState = 2;  // Stay in dim state
-            }
-            break;
-        case 2:  // Display is dim - stays here
-            break;
-    }
+    // Screen power management (auto-dim after inactivity)
+    screenPowerLoop();
 
     // Small delay to prevent watchdog issues and yield to other tasks
     delay(2);

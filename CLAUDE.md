@@ -16,3 +16,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 6. **Never speculate about unread code**: Never make claims about code you haven't opened. If a specific file is referenced, read it before answering. Investigate and read relevant files BEFORE answering questions about the codebase. Give grounded, hallucination-free answers.
 
+7. **Markdown formatting for documentation**: When creating or editing markdown files (especially plan documents in `doc/`), follow proper formatting to avoid linting warnings:
+   - Add blank lines before and after lists (MD032)
+   - Add blank lines after bold headers before their associated lists
+   - Add blank lines before code blocks that follow text
+   - Ensure nested lists have proper spacing

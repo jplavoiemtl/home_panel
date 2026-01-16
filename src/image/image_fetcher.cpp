@@ -8,6 +8,7 @@
 #include "secrets_private.h"
 #include "ui.h"
 #include "../ui_custom.h"  // Custom UI extensions (not overwritten by SquareLine Studio)
+#include "../screen/screen_power.h"  // Screen power management
 
 // Use Serial for debug output
 #define USBSerial Serial
@@ -256,7 +257,7 @@ static bool requestImage(const char* endpoint_type) {
     }
   } else {
     url = String(IMAGE_SERVER_BASE) + String(endpoint_type) + "?token=" + String(API_TOKEN);
-    USBSerial.println("Initiating HTTP GET: " + url);
+    // USBSerial.println("Initiating HTTP GET: " + url);
     bool beginResult = httpClient.begin(url);
     if (!beginResult) {
       USBSerial.println("FATAL: httpClient.begin() failed for HTTP!");
@@ -466,6 +467,9 @@ bool requestLatestImage() {
     USBSerial.println("On unsupported screen, ignoring image request");
     return false;
   }
+
+  // Wake screen for incoming image (handles MQTT-triggered requests)
+  screenPowerActivity();
 
   USBSerial.println("Initiating async latest image request...");
   prepareForRequest();
