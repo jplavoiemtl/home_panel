@@ -6,6 +6,7 @@
 #include <WiFiClientSecure.h>
 
 #include "secrets_private.h"
+#include "../net/net_module.h"
 #include "ui.h"
 #include "../ui_custom.h"  // Custom UI extensions (not overwritten by SquareLine Studio)
 #include "../screen/screen_power.h"  // Screen power management
@@ -243,9 +244,10 @@ static bool requestImage(const char* endpoint_type) {
   }
 
   String url;
-  bool isSecureConnection = (WiFi.SSID() == ssid2);
+  // Use MQTT server selection to determine image server (LOCAL=HTTP, REMOTE=HTTPS)
+  bool useRemoteServer = (netGetCurrentMqttServer() == MQTT_SERVER_REMOTE);
 
-  if (isSecureConnection) {
+  if (useRemoteServer) {
     url = String(IMAGE_SERVER_REMOTE) + String(endpoint_type) + "?token=" + String(API_TOKEN);
     USBSerial.println("Initiating HTTPS GET: " + url);
     httpsClient.setCACert(remote_server_ca_cert);

@@ -245,12 +245,13 @@ void initMQTT() {
 
     Serial.println("Initializing MQTT...");
 
-    // Configure MQTT client for home network (connection 1)
-    // Phase C will add NVS-based auto-detection for home vs remote
-    netConfigureMqttClient(1);
+    // Load MQTT server preference from NVS (defaults to LOCAL)
+    netLoadMqttServerFromNVS();
 
-    // Attempt initial connection
-    netCheckMqtt(true);  // Bypass rate limit for initial connection
+    // Attempt connection with fallback
+    if (!netConnectMqttWithFallback()) {
+        Serial.println("MQTT: Both servers failed, will retry periodically");
+    }
 
     updateConnectionStatus();
 }
@@ -298,12 +299,12 @@ void updateConnectionStatus() {
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFF0000), LV_PART_MAIN);
         } else if (!netIsMqttConnected()) {
             char buf[64];
-            snprintf(buf, sizeof(buf), "IP: %s | MQTT: ...", WiFi.localIP().toString().c_str());
+            snprintf(buf, sizeof(buf), "IP: %s | No MQTT", WiFi.localIP().toString().c_str());
             lv_label_set_text(ui_labelConnectionStatus, buf);
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
         } else {
             char buf[64];
-            snprintf(buf, sizeof(buf), "IP: %s | MQTT: OK", WiFi.localIP().toString().c_str());
+            snprintf(buf, sizeof(buf), "IP: %s | MQTT %s", WiFi.localIP().toString().c_str(), netGetMqttServerName());
             lv_label_set_text(ui_labelConnectionStatus, buf);
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0x00FF00), LV_PART_MAIN);
         }

@@ -1,9 +1,14 @@
 #pragma once
 
 #include <Arduino.h>
+#include <Preferences.h>
 #include <PubSubClient.h>
 #include <WiFiClient.h>
 #include <WiFiClientSecure.h>
+
+// MQTT server constants
+constexpr int MQTT_SERVER_LOCAL = 1;
+constexpr int MQTT_SERVER_REMOTE = 2;
 
 struct NetTopics {
   const char* image;
@@ -39,3 +44,12 @@ void netCheckMqtt(bool bypassRateLimit = false);
 // Accessors
 bool netIsMqttConnected();
 bool netHasInitialMqttSuccess();
+int netGetCurrentMqttServer();
+const char* netGetMqttServerName();
+
+// NVS functions for MQTT server preference
+void netLoadMqttServerFromNVS();
+void netSaveMqttServerToNVS();
+
+// Fallback connection logic (for boot-time use)
+bool netConnectMqttWithFallback();
