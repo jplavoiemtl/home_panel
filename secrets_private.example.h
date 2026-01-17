@@ -5,12 +5,12 @@
 // ====================================================================
 // MQTT SERVER CONFIGURATION
 // ====================================================================
-// SERVER1 = LOCAL (non-TLS, port 1883)
-// SERVER2 = REMOTE (TLS, port 9735)
+// SERVER1 = LOCAL (non-TLS, typically port 1883)
+// SERVER2 = REMOTE (TLS, typically port 8883)
 // ====================================================================
 
 #define SERVERPORT1 1883   // Local MQTT (non-secure)
-#define SERVERPORT2 9735   // Remote MQTT (TLS secure)
+#define SERVERPORT2 8883   // Remote MQTT (TLS secure) - change to your broker's port
 
 // MQTT Servers (defined in secrets_private.cpp)
 extern const char* SERVER1;  // Local server IP
