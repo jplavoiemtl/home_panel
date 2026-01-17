@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiManager.h>          // https://github.com/tzapu/WiFiManager
+#include <WebServer.h>
+#include <ElegantOTA.h>           // https://github.com/ayushsharma82/ElegantOTA
 #include <PubSubClient.h>
 #include <lvgl.h>
 
@@ -47,6 +49,9 @@ WiFiClient wifiClient;
 WiFiClientSecure secureClient;
 PubSubClient mqttClient;
 
+// Web server for OTA updates
+WebServer server(80);
+
 // Timing
 unsigned long lastWiFiCheck = 0;
 constexpr unsigned long WIFI_CHECK_INTERVAL = 10000;  // 10 seconds
@@ -69,6 +74,7 @@ void updateConnectionStatus();
 void logHeapStatus();
 void showConnectScreen(const char* message);
 void showMainScreen();
+void initOTA();
 
 
 // ============================================================================
@@ -88,6 +94,75 @@ void showMainScreen() {
     lv_scr_load(ui_Screen1);
     bsp_display_backlight_on();
     Serial.println("Main screen active");
+}
+
+// ============================================================================
+// OTA Functions (ElegantOTA)
+// ============================================================================
+
+void onOTAStart() {
+    Serial.println("OTA update started - switching to OTA screen");
+
+    // Switch to OTA screen
+    if (ui_ScreenOTA) {
+        lv_label_set_text(ui_labelOTAStatus, "Updating firmware...");
+        lv_label_set_text(ui_labelOTAProgress, "0%");
+        lv_scr_load(ui_ScreenOTA);
+        lv_refr_now(NULL);  // Force immediate refresh
+        Serial.println("OTA screen loaded");
+    } else {
+        Serial.println("ERROR: ui_ScreenOTA is NULL!");
+    }
+}
+
+void onOTAProgress(size_t current, size_t final) {
+    static size_t lastKB = 0;
+
+    // ElegantOTA 3.x bug: 'current' is cumulative bytes received, 'final' is previous value
+    // Show KB received since we don't have total size
+    size_t kb = current / 1024;
+
+    // Only update display every 10 KB to reduce overhead
+    if (kb >= lastKB + 10) {
+        lastKB = kb;
+        Serial.printf("OTA: %u KB\n", kb);
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%u KB", kb);
+        lv_label_set_text(ui_labelOTAProgress, buf);
+        lv_refr_now(NULL);  // Force immediate refresh
+    }
+}
+
+void onOTAEnd(bool success) {
+    if (success) {
+        Serial.println("OTA update finished successfully");
+        lv_label_set_text(ui_labelOTAStatus, "Update complete!");
+        lv_label_set_text(ui_labelOTAProgress, "Restarting...");
+    } else {
+        Serial.println("OTA update failed");
+        lv_label_set_text(ui_labelOTAStatus, "Update failed!");
+        lv_label_set_text(ui_labelOTAProgress, "");
+    }
+    lv_refr_now(NULL);  // Force immediate refresh
+}
+
+// Initialize OTA web server
+void initOTA() {
+    Serial.println("Initializing OTA...");
+
+    // Root endpoint - device identification
+    server.on("/", []() {
+        server.send(200, "text/plain", "Home Panel module - OTA available at /update");
+    });
+
+    // Initialize ElegantOTA with authentication
+    ElegantOTA.begin(&server, "jp", "delphijpl");
+    ElegantOTA.onStart(onOTAStart);
+    ElegantOTA.onProgress(onOTAProgress);
+    ElegantOTA.onEnd(onOTAEnd);
+
+    server.begin();
+    Serial.printf("OTA ready at http://%s/update\n", WiFi.localIP().toString().c_str());
 }
 
 // ============================================================================
@@ -336,6 +411,9 @@ void setup() {
     // Connect to WiFi using WiFiManager (captive portal for configuration)
     initWiFiManager();
 
+    // Initialize OTA web server (after WiFi is connected)
+    initOTA();
+
     // Initialize MQTT
     initMQTT();
 
@@ -361,6 +439,10 @@ void loop() {
         mqttClient.loop();
         netCheckMqtt();
     }
+
+    // Process OTA web server
+    server.handleClient();
+    ElegantOTA.loop();
 
     // Process image fetcher
     imageFetcherLoop();

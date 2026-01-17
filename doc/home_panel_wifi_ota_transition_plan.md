@@ -209,7 +209,7 @@ The following decisions have been reviewed and approved:
 | Display during captive portal | **Accept freeze** – simpler implementation, portal is infrequent |
 | OTA credentials | **Use reference credentials** (`"jp"/"delphijpl"`) – update later |
 | AP name | **`"homepanel"`** – simple and descriptive |
-| NVS namespace | **`"homepanel"`** with key `mqtt_mode` |
+| NVS namespace | **`"homepanel"`** with key `mqtt_server` (values: `LOCAL` or `REMOTE`) |
 | Physical reset button | **None** – use `wm.resetSettings()` in code for development only |
 
 ---
@@ -283,44 +283,31 @@ The following decisions have been reviewed and approved:
 
 ### Phase C: NVS MQTT Auto-Detection
 
-**Goal**: Automatically detect and remember MQTT server preference (home vs remote).
+**Goal**: Automatically detect and remember MQTT server preference with bidirectional fallback.
 
-**Steps**:
+**Summary**:
 
-1. Add NVS helper functions to `net_module.cpp`:
+- Store MQTT server preference in NVS (`LOCAL` or `REMOTE`)
+- Default to `LOCAL` on first boot
+- Bidirectional fallback: if stored server fails, try the other
+- Update NVS only when fallback succeeds (minimal writes)
+- Retry every 30 seconds if both servers fail
+- Display status: "MQTT Local", "MQTT Remote", or "No MQTT"
 
-   ```cpp
-   // NVS keys
-   // Namespace: "homepanel"
-   // Key: "mqtt_mode" -> 0=unknown, 1=home, 2=remote
+**Key Design Decisions**:
 
-   int nvsReadMqttMode();
-   void nvsWriteMqttMode(int mode);
-   void nvsClearMqttMode();
-   ```
+- WiFi and MQTT are independent (changing WiFi does NOT clear MQTT preference)
+- Mid-session reconnects retry the current server only (no fallback)
+- TLS handling already implemented in `net_module.cpp`
 
-2. Implement MQTT probe logic:
-   - On boot, read NVS `mqtt_mode`
-   - If unknown (0): Try local MQTT (port 1883) first
-     - Success → save mode=1 (home), use local server
-     - Fail → save mode=2 (remote), use TLS server
-   - If known (1 or 2): Connect directly to saved preference
-
-3. Add WiFiManager save callback to clear NVS when WiFi changes:
-
-   ```cpp
-   wm.setSaveConfigCallback([]() {
-       nvsClearMqttMode();  // Force re-probe on next boot
-   });
-   ```
-
-4. Update `netConfigureMqttClient()` to use NVS-based mode selection
+**Detailed Implementation**: See `doc/MQTT_update_plan.md`
 
 **Files Modified**:
 
-- `net_module.cpp` – NVS functions, probe logic
+- `net_module.cpp` – NVS functions, fallback connection logic
 - `net_module.h` – New function declarations
-- `home_panel.ino` – WiFiManager save callback
+- `home_panel.ino` – Updated `initMQTT()` and status display
+- `secrets_private.h/.cpp` – Remove WiFi credentials and HOME/CAR build modes
 
 ---
 
@@ -339,10 +326,11 @@ The following decisions have been reviewed and approved:
 
 | Challenge | Risk Level | Mitigation |
 |-----------|------------|------------|
-| Local MQTT probe false positive | Low | Specific port (1883) + quick timeout |
-| TLS handshake delay | Low | Probe non-TLS first (faster fail) |
-| NVS write wear | Low | Only write on actual change |
-| Network switching mid-session | Medium | Re-probe only when WiFi SSID changes via portal |
+| Local MQTT server unreachable | Low | Bidirectional fallback to REMOTE |
+| Remote MQTT server unreachable | Low | Bidirectional fallback to LOCAL |
+| TLS handshake delay | Low | Try LOCAL (non-TLS) first by default |
+| NVS write wear | Low | Only write on fallback success |
+| Both servers fail | Low | Retry every 30s, alternate servers |
 
 ### Recovery & Reliability
 
@@ -366,9 +354,11 @@ The following decisions have been reviewed and approved:
 | MQTT broker down | Retries every 15s, reconnects when available |
 | OTA update via browser | Succeeds at `http://<ip>/update` |
 | Portal timeout (180s) | Restarts ESP, does not hang |
-| First boot on home network | Probes local MQTT, saves mode=1 |
-| First boot on iPhone hotspot | Local probe fails, uses TLS, saves mode=2 |
-| WiFi changed via portal | NVS cleared, re-probes MQTT on next boot |
+| First boot (NVS empty) | Tries LOCAL first, falls back to REMOTE if needed, saves preference |
+| Boot with saved LOCAL | Connects to LOCAL, falls back to REMOTE if LOCAL fails |
+| Boot with saved REMOTE | Connects to REMOTE, falls back to LOCAL if REMOTE fails |
+| Both MQTT servers fail | Shows "No MQTT", retries every 30s alternating servers |
+| WiFi changed via portal | MQTT preference unchanged (WiFi and MQTT are independent) |
 
 ---
 
@@ -376,10 +366,10 @@ The following decisions have been reviewed and approved:
 
 | File | Phase | Changes |
 |------|-------|---------|
-| `home_panel.ino` | A, B | Replace `initWiFi()`, add WebServer, add ElegantOTA, add callbacks |
-| `net_module.cpp` | C | Add NVS read/write, add MQTT probe logic |
-| `net_module.h` | C | Add NVS function declarations |
-| `secrets_private.h` | A | Remove HOME/CAR build flags (optional) |
+| `home_panel.ino` | A, B, C | Replace `initWiFi()`, add WebServer, add ElegantOTA, update `initMQTT()` and status display |
+| `net_module.cpp` | C | Add NVS read/write, add fallback connection logic |
+| `net_module.h` | C | Add NVS and fallback function declarations |
+| `secrets_private.h/.cpp` | C | Remove HOME/CAR build modes, remove WiFi credentials |
 | `platformio.ini` or build config | A, B | Add library dependencies, verify OTA partition |
 
 ---
