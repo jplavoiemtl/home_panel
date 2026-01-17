@@ -67,7 +67,28 @@ void initMQTT();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 void updateConnectionStatus();
 void logHeapStatus();
+void showConnectScreen(const char* message);
+void showMainScreen();
 
+
+// ============================================================================
+// Screen Switching Functions
+// ============================================================================
+
+// Show connect screen with status message
+void showConnectScreen(const char* message) {
+    lv_label_set_text(ui_labelConnectStatus, message);
+    lv_scr_load(ui_ScreenConnect);
+    lv_timer_handler();  // Force render before blocking WiFi operations
+}
+
+// Show main screen after successful connection
+void showMainScreen() {
+    Serial.println("Switching to main screen...");
+    lv_scr_load(ui_Screen1);
+    bsp_display_backlight_on();
+    Serial.println("Main screen active");
+}
 
 // ============================================================================
 // WiFi Functions (WiFiManager)
@@ -79,11 +100,11 @@ void configModeCallback(WiFiManager *myWiFiManager) {
     Serial.print("Connect to AP: ");
     Serial.println(myWiFiManager->getConfigPortalSSID());
 
-    // Update display to show portal mode
-    if (ui_labelConnectionStatus) {
-        lv_label_set_text(ui_labelConnectionStatus, "WiFi Portal Mode");
-        lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
-    }
+    // Show portal info on connect screen
+    char buf[64];
+    snprintf(buf, sizeof(buf), "Portal: %s (192.168.4.1)", myWiFiManager->getConfigPortalSSID().c_str());
+    showConnectScreen(buf);
+    bsp_display_brightness_set(25);  // Dim for portal mode
 }
 
 // Restart ESP after WiFi failure - allows self-recovery when network returns
@@ -96,12 +117,6 @@ void restartESP() {
 // Initialize WiFi using WiFiManager (captive portal for configuration)
 void initWiFiManager() {
     Serial.println("Initializing WiFiManager...");
-
-    // Update UI
-    if (ui_labelConnectionStatus) {
-        lv_label_set_text(ui_labelConnectionStatus, "Connecting WiFi...");
-        lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFFF00), LV_PART_MAIN);
-    }
 
     WiFiManager wm;
 
@@ -127,6 +142,9 @@ void initWiFiManager() {
         Serial.println("Connected to WiFi");
         Serial.printf("SSID: %s\n", WiFi.SSID().c_str());
         Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+
+        // Switch to main screen
+        showMainScreen();
     }
 
     updateConnectionStatus();
@@ -278,6 +296,9 @@ void setup() {
     Serial.println("Initializing UI...");
     ui_init();
     Serial.println("UI initialized");
+
+    // Show connect screen before WiFi attempt
+    showConnectScreen("Connecting...");
 
     // Initialize network module
     Serial.println("Initializing network module...");

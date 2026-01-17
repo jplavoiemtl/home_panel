@@ -11,7 +11,7 @@ extern "C" {
 
 // Configuration constants
 #define SCREEN_ON_TIMEOUT_MS      60000   // 1 minute before dimming
-#define SCREEN_DIM_BRIGHTNESS     20      // 20% brightness when dimmed
+#define SCREEN_DIM_BRIGHTNESS     10      // 10% brightness when dimmed
 
 // Screen power states
 typedef enum {
