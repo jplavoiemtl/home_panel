@@ -156,7 +156,7 @@ void initOTA() {
     });
 
     // Initialize ElegantOTA with authentication
-    ElegantOTA.begin(&server, "jp", "delphijpl");
+    ElegantOTA.begin(&server, OTA_USERNAME, OTA_PASSWORD);
     ElegantOTA.onStart(onOTAStart);
     ElegantOTA.onProgress(onOTAProgress);
     ElegantOTA.onEnd(onOTAEnd);
