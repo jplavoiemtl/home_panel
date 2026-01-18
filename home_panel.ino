@@ -21,6 +21,7 @@
 #include "src/net/net_module.h"
 #include "src/image/image_fetcher.h"
 #include "src/screen/screen_power.h"
+#include "src/time/time_service.h"
 
 // Secrets (credentials)
 #include "secrets_private.h"
@@ -417,6 +418,9 @@ void setup() {
 
     // Initialize MQTT
     initMQTT();
+
+    // Initialize time service (NTP sync + label updates)
+    time_service_init();
 
     Serial.println("=== Setup Complete ===\n");
 }

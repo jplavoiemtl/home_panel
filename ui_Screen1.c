@@ -13,6 +13,9 @@ lv_obj_t * ui_ButtonNew = NULL;
 lv_obj_t * ui_labelPowerValue = NULL;
 lv_obj_t * ui_labelEnergyValue = NULL;
 lv_obj_t * ui_ActivitySpinner = NULL;
+lv_obj_t * ui_powerLabel = NULL;
+lv_obj_t * ui_energyLabel = NULL;
+lv_obj_t * ui_labelTimeDate = NULL;
 // event funtions
 void ui_event_Screen1(lv_event_t * e)
 {
@@ -71,7 +74,7 @@ void ui_Screen1_screen_init(void)
     ui_labelConnectionStatus = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelConnectionStatus, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelConnectionStatus, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelConnectionStatus, -10);
+    lv_obj_set_x(ui_labelConnectionStatus, -115);
     lv_obj_set_y(ui_labelConnectionStatus, -138);
     lv_obj_set_align(ui_labelConnectionStatus, LV_ALIGN_CENTER);
     lv_label_set_text(ui_labelConnectionStatus, "Status");
@@ -122,10 +125,10 @@ void ui_Screen1_screen_init(void)
     ui_labelPowerValue = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelPowerValue, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelPowerValue, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelPowerValue, -2);
-    lv_obj_set_y(ui_labelPowerValue, -71);
-    lv_obj_set_align(ui_labelPowerValue, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_labelPowerValue, "Power");
+    lv_obj_set_x(ui_labelPowerValue, 93);
+    lv_obj_set_y(ui_labelPowerValue, -67);
+    lv_obj_set_align(ui_labelPowerValue, LV_ALIGN_LEFT_MID);
+    lv_label_set_text(ui_labelPowerValue, "--");
     lv_obj_set_style_text_color(ui_labelPowerValue, lv_color_hex(0xE9B804), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelPowerValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelPowerValue, &lv_font_montserrat_36, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -133,10 +136,10 @@ void ui_Screen1_screen_init(void)
     ui_labelEnergyValue = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelEnergyValue, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelEnergyValue, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelEnergyValue, 5);
-    lv_obj_set_y(ui_labelEnergyValue, -15);
-    lv_obj_set_align(ui_labelEnergyValue, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_labelEnergyValue, "Energy");
+    lv_obj_set_x(ui_labelEnergyValue, 94);
+    lv_obj_set_y(ui_labelEnergyValue, -16);
+    lv_obj_set_align(ui_labelEnergyValue, LV_ALIGN_LEFT_MID);
+    lv_label_set_text(ui_labelEnergyValue, "--");
     lv_obj_set_style_text_color(ui_labelEnergyValue, lv_color_hex(0xE9B804), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelEnergyValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelEnergyValue, &lv_font_montserrat_36, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -144,10 +147,49 @@ void ui_Screen1_screen_init(void)
     ui_ActivitySpinner = lv_spinner_create(ui_Screen1, 1000, 90);
     lv_obj_set_width(ui_ActivitySpinner, 35);
     lv_obj_set_height(ui_ActivitySpinner, 28);
-    lv_obj_set_x(ui_ActivitySpinner, -207);
-    lv_obj_set_y(ui_ActivitySpinner, -21);
+    lv_obj_set_x(ui_ActivitySpinner, -211);
+    lv_obj_set_y(ui_ActivitySpinner, 23);
     lv_obj_set_align(ui_ActivitySpinner, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_CLICKABLE);      /// Flags
+    lv_obj_set_style_bg_img_recolor(ui_ActivitySpinner, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_img_recolor_opa(ui_ActivitySpinner, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_arc_color(ui_ActivitySpinner, lv_color_hex(0xFFFFFF), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_opa(ui_ActivitySpinner, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_width(ui_ActivitySpinner, 2, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+
+    ui_powerLabel = lv_label_create(ui_Screen1);
+    lv_obj_set_width(ui_powerLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_powerLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_powerLabel, -191);
+    lv_obj_set_y(ui_powerLabel, -67);
+    lv_obj_set_align(ui_powerLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_powerLabel, "Power:");
+    lv_obj_set_style_text_color(ui_powerLabel, lv_color_hex(0xB2B2B2), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_powerLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_powerLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_energyLabel = lv_label_create(ui_Screen1);
+    lv_obj_set_width(ui_energyLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_energyLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_energyLabel, -194);
+    lv_obj_set_y(ui_energyLabel, -14);
+    lv_obj_set_align(ui_energyLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_energyLabel, "Energy:");
+    lv_obj_set_style_text_color(ui_energyLabel, lv_color_hex(0xB2B2B2), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_energyLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_energyLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_labelTimeDate = lv_label_create(ui_Screen1);
+    lv_obj_set_width(ui_labelTimeDate, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_labelTimeDate, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_labelTimeDate, 131);
+    lv_obj_set_y(ui_labelTimeDate, -138);
+    lv_obj_set_align(ui_labelTimeDate, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_labelTimeDate, "18 Jan 2026, 14:31:10");
+    lv_obj_set_style_text_color(ui_labelTimeDate, lv_color_hex(0xB2B2B2), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_labelTimeDate, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_labelTimeDate, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_ButtonLatest, ui_event_ButtonLatest, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ButtonBack, ui_event_ButtonBack, LV_EVENT_ALL, NULL);
@@ -169,5 +211,8 @@ void ui_Screen1_screen_destroy(void)
     ui_labelPowerValue = NULL;
     ui_labelEnergyValue = NULL;
     ui_ActivitySpinner = NULL;
+    ui_powerLabel = NULL;
+    ui_energyLabel = NULL;
+    ui_labelTimeDate = NULL;
 
 }

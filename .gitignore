@@ -12,6 +12,8 @@ CHANGELOG.md
 
 # Reference / companion code (not tracked)
 companion_reference_code/
+power_display_reference_code/
+ntp_reference_code/
 
 # Build output & squareline files
 build/

@@ -25,6 +25,9 @@ extern lv_obj_t * ui_ButtonNew;
 extern lv_obj_t * ui_labelPowerValue;
 extern lv_obj_t * ui_labelEnergyValue;
 extern lv_obj_t * ui_ActivitySpinner;
+extern lv_obj_t * ui_powerLabel;
+extern lv_obj_t * ui_energyLabel;
+extern lv_obj_t * ui_labelTimeDate;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus
