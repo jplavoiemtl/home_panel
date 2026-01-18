@@ -155,6 +155,8 @@ void netSaveMqttServerToNVS() {
 bool netConnectMqttWithFallback() {
   if (!cfg.mqttClient) return false;
 
+  int originalServer = currentMqttServer;  // Save original preference
+
   // Try the stored/current server first
   Serial.printf("MQTT: Trying %s server...\n", netGetMqttServerName());
   netConfigureMqttClient(currentMqttServer);
@@ -183,6 +185,9 @@ bool netConnectMqttWithFallback() {
     return true;
   }
 
-  Serial.println("MQTT: Both servers failed");
+  // Both failed - restore original server preference
+  Serial.println("MQTT: Both servers failed, restoring original preference");
+  currentMqttServer = originalServer;
+  netConfigureMqttClient(currentMqttServer);
   return false;
 }
