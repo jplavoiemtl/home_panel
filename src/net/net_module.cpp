@@ -93,11 +93,14 @@ void netCheckMqtt(bool bypassRateLimit) {
     }
     lastMqttAttempt = currentTime;
 
+    Serial.printf("MQTT: Reconnecting to %s server...\n", netGetMqttServerName());
+
     cfg.mqttClient->disconnect();  // clean stale state
     delay(100);
 
     if (cfg.mqttClient->connect(CLIENT_ID, USERNAME, KEY)) {
       mqttSuccess = true;
+      Serial.println("MQTT: Reconnected successfully");
       // Subscriptions
       if (cfg.topics.image) {
         cfg.mqttClient->subscribe(cfg.topics.image, 1);
