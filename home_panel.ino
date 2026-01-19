@@ -310,11 +310,6 @@ void updateConnectionStatus() {
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0x00FF00), LV_PART_MAIN);
         }
     }
-
-    // Activity spinner is now always shown to indicate LVGL is running
-    if (ui_ActivitySpinner) {
-        lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_HIDDEN);
-    }
 }
 
 // ============================================================================

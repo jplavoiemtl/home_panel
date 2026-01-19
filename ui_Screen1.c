@@ -12,7 +12,6 @@ lv_obj_t * ui_ButtonBack = NULL;
 lv_obj_t * ui_ButtonNew = NULL;
 lv_obj_t * ui_labelPowerValue = NULL;
 lv_obj_t * ui_labelEnergyValue = NULL;
-lv_obj_t * ui_ActivitySpinner = NULL;
 lv_obj_t * ui_powerLabel = NULL;
 lv_obj_t * ui_energyLabel = NULL;
 lv_obj_t * ui_labelTimeDate = NULL;
@@ -144,20 +143,6 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_text_opa(ui_labelEnergyValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelEnergyValue, &lv_font_montserrat_36, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_ActivitySpinner = lv_spinner_create(ui_Screen1, 1000, 90);
-    lv_obj_set_width(ui_ActivitySpinner, 35);
-    lv_obj_set_height(ui_ActivitySpinner, 28);
-    lv_obj_set_x(ui_ActivitySpinner, -211);
-    lv_obj_set_y(ui_ActivitySpinner, 23);
-    lv_obj_set_align(ui_ActivitySpinner, LV_ALIGN_CENTER);
-    lv_obj_clear_flag(ui_ActivitySpinner, LV_OBJ_FLAG_CLICKABLE);      /// Flags
-    lv_obj_set_style_bg_img_recolor(ui_ActivitySpinner, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_img_recolor_opa(ui_ActivitySpinner, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_set_style_arc_color(ui_ActivitySpinner, lv_color_hex(0xFFFFFF), LV_PART_INDICATOR | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_opa(ui_ActivitySpinner, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
-    lv_obj_set_style_arc_width(ui_ActivitySpinner, 2, LV_PART_INDICATOR | LV_STATE_DEFAULT);
-
     ui_powerLabel = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_powerLabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_powerLabel, LV_SIZE_CONTENT);    /// 1
@@ -183,9 +168,9 @@ void ui_Screen1_screen_init(void)
     ui_labelTimeDate = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelTimeDate, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelTimeDate, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelTimeDate, 131);
+    lv_obj_set_x(ui_labelTimeDate, 269);
     lv_obj_set_y(ui_labelTimeDate, -138);
-    lv_obj_set_align(ui_labelTimeDate, LV_ALIGN_CENTER);
+    lv_obj_set_align(ui_labelTimeDate, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelTimeDate, "18 Jan 2026, 14:31:10");
     lv_obj_set_style_text_color(ui_labelTimeDate, lv_color_hex(0xB2B2B2), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelTimeDate, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -210,7 +195,6 @@ void ui_Screen1_screen_destroy(void)
     ui_ButtonNew = NULL;
     ui_labelPowerValue = NULL;
     ui_labelEnergyValue = NULL;
-    ui_ActivitySpinner = NULL;
     ui_powerLabel = NULL;
     ui_energyLabel = NULL;
     ui_labelTimeDate = NULL;

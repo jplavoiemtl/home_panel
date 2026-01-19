@@ -30,3 +30,8 @@ String time_service_getFormatted();
 
 // Check if time has been successfully initialized
 bool time_service_isInitialized();
+
+// Pause/resume label updates (for screen transitions)
+// Call pause when leaving Screen1, resume when returning
+void time_service_pause();
+void time_service_resume();

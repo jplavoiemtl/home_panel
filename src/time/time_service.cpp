@@ -195,3 +195,15 @@ String time_service_getFormatted() {
 bool time_service_isInitialized() {
     return timeInitialized;
 }
+
+void time_service_pause() {
+    if (labelTimer) {
+        lv_timer_pause(labelTimer);
+    }
+}
+
+void time_service_resume() {
+    if (labelTimer) {
+        lv_timer_resume(labelTimer);
+    }
+}

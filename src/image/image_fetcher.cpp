@@ -10,6 +10,7 @@
 #include "ui.h"
 #include "../ui_custom.h"  // Custom UI extensions (not overwritten by SquareLine Studio)
 #include "../screen/screen_power.h"  // Screen power management
+#include "../time/time_service.h"  // For pausing timer during image display
 
 // Use Serial for debug output
 #define USBSerial Serial
@@ -83,11 +84,15 @@ void imageFetcherInit(const ImageFetcherConfig& config) {
 
   // Ensure descriptor is zeroed
   memset(&img_dsc, 0, sizeof(img_dsc));
+
+  // Attach screen2 event handler for SCREEN_LOADED and SCREEN_UNLOAD_START events
+  if (cfg.screen2) {
+    lv_obj_add_event_cb(cfg.screen2, screen2_event_handler, LV_EVENT_ALL, NULL);
+  }
 }
 
 //***************************************************************************************************
 static void cleanupImageRequest() {
-  USBSerial.println("Cleaning up image fetcher state...");
 
   // 0. Set flag FIRST to stop any buffer access in processHTTPResponse
   cleanupInProgress = true;
@@ -127,22 +132,30 @@ static void cleanupImageRequest() {
 
 //***************************************************************************************************
 static void prepareForRequest() {
-  USBSerial.println("Preparing UI for new image request...");
-
   cleanupImageRequest();
 
-  // Save the current screen if it's not the image screen itself (Screen 2)
+  // Pause time service timer to prevent LVGL conflicts during image display
+  time_service_pause();
+
+  // Disable Button2 clicks temporarily to prevent touch carryover from triggering
+  // an unwanted screen change (user's finger may still be down from pressing buttons)
+  extern lv_obj_t* ui_Button2;
+  if (ui_Button2) {
+    lv_obj_clear_flag(ui_Button2, LV_OBJ_FLAG_CLICKABLE);
+  }
+
+  // Save the current screen and transition to Screen2
   lv_obj_t* current = lv_scr_act();
   if (current != cfg.screen2 && cfg.screen2) {
       ui_previous_screen = current;
       lv_disp_load_scr(cfg.screen2);
   } else if (current == cfg.screen2 && ui_previous_screen == NULL && cfg.screen1) {
-       // Ideally we shouldn't be here without a previous screen, but safety fallback:
+       // Safety fallback if already on Screen2 without previous screen set
        ui_previous_screen = cfg.screen1;
   }
 
-  // Note: Rotation should already be at 90 degrees (restored by SCREEN_UNLOAD_START)
-  // Don't call lv_disp_set_rotation() here as it triggers unnecessary redraw
+  // NOTE: Display rotation stays at 90° throughout - do not change it.
+  // Toggling rotation during screen transitions causes display corruption.
 
   // Reset loading timeout state
   screenTransitionTime = millis();
@@ -187,6 +200,7 @@ void imageFetcherLoop() {
       screen2TimeoutActive = false;
       imageDisplayTimeoutActive = false;
 
+      time_service_resume();  // Resume timer when returning to Screen1
       if (ui_previous_screen) {
         lv_disp_load_scr(ui_previous_screen);
       } else if (cfg.screen1) {
@@ -204,6 +218,7 @@ void imageFetcherLoop() {
         screen2TimeoutActive = false;
         imageDisplayTimeoutActive = false;
 
+        time_service_resume();  // Resume timer when returning to Screen1
         if (ui_previous_screen) {
           lv_disp_load_scr(ui_previous_screen);
         } else if (cfg.screen1) {
@@ -422,11 +437,9 @@ static void processHTTPResponse() {
 
     USBSerial.println("JPEG decoded successfully into PSRAM.");
 
-    // Disable rotation for raw image display (image is already in correct 480x320 landscape format)
-    lv_disp_t* disp = lv_disp_get_default();
-    if (disp) {
-      lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
-    }
+    // NOTE: Display rotation stays at 90 degrees throughout (set in setup).
+    // The raw image buffer (480x320) displays correctly with LVGL's 90° rotation.
+    // Do NOT toggle rotation here - it causes screen transition corruption.
 
     img_dsc.header.always_zero = 0;
     img_dsc.header.w = cfg.screenWidth;
@@ -444,6 +457,19 @@ static void processHTTPResponse() {
 
     // Enable back button now that image is displayed
     ui_Screen2_setImageDisplayed(true);
+
+    // Re-enable Button2 clicks after a delay to let any queued touch events clear.
+    // This prevents touch carryover from the original button press.
+    extern lv_obj_t* ui_Button2;
+    if (ui_Button2) {
+      lv_timer_create([](lv_timer_t* timer) {
+        extern lv_obj_t* ui_Button2;
+        if (ui_Button2) {
+          lv_obj_add_flag(ui_Button2, LV_OBJ_FLAG_CLICKABLE);
+        }
+        lv_timer_del(timer);  // One-shot timer
+      }, 500, NULL);  // 500ms delay
+    }
 
     httpState = HTTP_COMPLETE;
     requestInProgress = false;
@@ -508,21 +534,17 @@ void buttonBack_event_handler(lv_event_t* e) {
 //***************************************************************************************************
 void screen2_event_handler(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
-  lv_disp_t* disp = lv_disp_get_default();
 
   if (code == LV_EVENT_SCREEN_LOADED) {
-    USBSerial.println("Screen 2 Loaded.");
     if (httpState != HTTP_COMPLETE) {
+      // Hide image while loading
       if (cfg.imgScreen2Background) {
         lv_obj_set_style_opa(cfg.imgScreen2Background, LV_OPA_TRANSP, LV_PART_MAIN);
       }
     } else {
+      // Image already loaded - show it (rotation stays at 90°)
       if (cfg.imgScreen2Background) {
         lv_obj_set_style_opa(cfg.imgScreen2Background, LV_OPA_COVER, LV_PART_MAIN);
-      }
-      // Set rotation to NONE for raw image display
-      if (disp) {
-        lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
       }
     }
     // Only reset timeout if no request is in progress
@@ -546,6 +568,12 @@ void screen2_event_handler(lv_event_t* e) {
     // Reset back button state
     ui_Screen2_setImageDisplayed(false);
 
+    // Re-enable Button2 clicks (was disabled to prevent touch carryover)
+    extern lv_obj_t* ui_Button2;
+    if (ui_Button2) {
+      lv_obj_add_flag(ui_Button2, LV_OBJ_FLAG_CLICKABLE);
+    }
+
     // Stop HTTP connections
     httpClient.end();
     httpsClient.stop();
@@ -564,13 +592,13 @@ void screen2_event_handler(lv_event_t* e) {
     memset(&img_dsc, 0, sizeof(lv_img_dsc_t));
     requestInProgress = false;
 
-    // Restore rotation to 90 degrees for normal UI display
-    if (disp) {
-      lv_disp_set_rotation(disp, LV_DISP_ROT_90);
-    }
+    // NOTE: No rotation change needed - display stays at 90° throughout.
+    // Toggling rotation during screen transitions causes display corruption.
+
+    // Resume time service timer now that we're returning to Screen1
+    time_service_resume();
 
     // Clear cleanup flag
     cleanupInProgress = false;
-    USBSerial.println("Screen 2 cleanup complete.");
   }
 }
