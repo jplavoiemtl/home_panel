@@ -33,6 +33,9 @@ extern const char* API_TOKEN;
 #define OTA_USERNAME "your_ota_username"
 #define OTA_PASSWORD "your_ota_password"
 
+// WiFiManager AP Password (for configuration portal)
+#define WIFIMANAGER_AP_PASSWORD "your_ap_password"
+
 // --- CERTIFICATES ---
 
 // Certificate for secure MQTT connection (port 9735)

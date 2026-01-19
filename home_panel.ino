@@ -218,7 +218,7 @@ void initWiFiManager() {
 
     // Attempt to connect using stored credentials, or start config portal
     // AP name: "homepanel", password protected
-    bool res = wm.autoConnect("homepanel", "password");
+    bool res = wm.autoConnect("homepanel", WIFIMANAGER_AP_PASSWORD);
 
     if (!res) {
         // WiFi connection failed after portal timeout
