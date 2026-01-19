@@ -50,6 +50,9 @@ WiFiClient wifiClient;
 WiFiClientSecure secureClient;
 PubSubClient mqttClient;
 
+// Dynamic MQTT client ID (generated from chip ID)
+char mqttClientId[16];
+
 // Web server for OTA updates
 WebServer server(80);
 
@@ -217,8 +220,8 @@ void initWiFiManager() {
     // wm.resetSettings();
 
     // Attempt to connect using stored credentials, or start config portal
-    // AP name: "homepanel", password protected
-    bool res = wm.autoConnect("homepanel", WIFIMANAGER_AP_PASSWORD);
+    // AP name: dynamic (e.g., "homeA1B2C"), password protected
+    bool res = wm.autoConnect(mqttClientId, WIFIMANAGER_AP_PASSWORD);
 
     if (!res) {
         // WiFi connection failed after portal timeout
@@ -395,6 +398,11 @@ void setup() {
     Serial.printf("Heap: %d free of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
     Serial.printf("PSRAM: %d free of %d\n", ESP.getFreePsram(), ESP.getPsramSize());
 
+    // Generate dynamic MQTT client ID from chip ID (last 20 bits as 5 hex digits)
+    uint32_t chipId = (uint32_t)(ESP.getEfuseMac() & 0xFFFFF);
+    snprintf(mqttClientId, sizeof(mqttClientId), "home%05X", chipId);
+    Serial.printf("MQTT Client ID: %s\n", mqttClientId);
+
     // Initialize display
     Serial.println("Initializing display...");
     uint32_t buffer_size = EXAMPLE_LCD_QSPI_H_RES * EXAMPLE_LCD_QSPI_V_RES;
@@ -439,6 +447,7 @@ void setup() {
         .server2 = SERVER2,
         .serverPort2 = SERVERPORT2,
         .caCert = ca_cert,
+        .clientId = mqttClientId,
         .mqttClient = &mqttClient,
         .wifiClient = &wifiClient,
         .secureClient = &secureClient,

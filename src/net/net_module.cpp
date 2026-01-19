@@ -32,7 +32,7 @@ bool tryMqttConnect() {
   cfg.mqttClient->disconnect();
   delay(100);
 
-  if (cfg.mqttClient->connect(CLIENT_ID, USERNAME, KEY)) {
+  if (cfg.mqttClient->connect(cfg.clientId, USERNAME, KEY)) {
     // Subscribe to topics
     if (cfg.topics.image) {
       cfg.mqttClient->subscribe(cfg.topics.image, 1);
@@ -98,7 +98,7 @@ void netCheckMqtt(bool bypassRateLimit) {
     cfg.mqttClient->disconnect();  // clean stale state
     delay(100);
 
-    if (cfg.mqttClient->connect(CLIENT_ID, USERNAME, KEY)) {
+    if (cfg.mqttClient->connect(cfg.clientId, USERNAME, KEY)) {
       mqttSuccess = true;
       Serial.println("MQTT: Reconnected successfully");
       // Subscriptions

@@ -25,6 +25,7 @@ struct NetConfig {
   const char* server2;
   uint16_t serverPort2;
   const char* caCert;
+  const char* clientId;  // Dynamic MQTT client ID (e.g., "homeA1B2C")
   PubSubClient* mqttClient;
   WiFiClient* wifiClient;
   WiFiClientSecure* secureClient;

@@ -27,7 +27,6 @@ extern const char* API_TOKEN;
 // MQTT Credentials
 #define USERNAME    "your_mqtt_username"
 #define KEY         "your_mqtt_password"
-#define CLIENT_ID   "HOMEPANEL"
 
 // OTA Credentials
 #define OTA_USERNAME "your_ota_username"
