@@ -61,6 +61,14 @@ constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
 unsigned long lastHeapLog = 0;
 constexpr unsigned long HEAP_LOG_INTERVAL = 300000;  // 5 minutes
 
+// WiFi recovery state machine
+enum WifiState { WIFI_STATE_CONNECTED, WIFI_STATE_RECOVERING, WIFI_STATE_FAILED };
+WifiState wifiState = WIFI_STATE_CONNECTED;
+unsigned long wifiDisconnectTime = 0;
+constexpr unsigned long WIFI_RECOVERY_TIMEOUT_MS = 60000;   // 1 minute recovery window
+constexpr unsigned long WIFI_RECONNECT_ATTEMPT_MS = 5000;   // 5 seconds between attempts
+unsigned long lastWifiReconnectAttempt = 0;
+
 // ============================================================================
 // Forward Declarations
 // ============================================================================
@@ -76,6 +84,9 @@ void logHeapStatus();
 void showConnectScreen(const char* message);
 void showMainScreen();
 void initOTA();
+
+// WiFi availability check (used by image_fetcher to block requests during recovery)
+bool isWifiAvailable();
 
 
 // ============================================================================
@@ -183,10 +194,9 @@ void configModeCallback(WiFiManager *myWiFiManager) {
     bsp_display_brightness_set(25);  // Dim for portal mode
 }
 
-// Restart ESP after WiFi failure - allows self-recovery when network returns
+// Restart ESP after WiFi recovery timeout
 void restartESP() {
-    Serial.println("WiFi connection failed, restarting in 10 seconds...");
-    delay(10000);
+    Serial.println("WiFi recovery failed, restarting now...");
     ESP.restart();
 }
 
@@ -226,11 +236,53 @@ void initWiFiManager() {
     updateConnectionStatus();
 }
 
-// Check WiFi connection - restart-based recovery for reliability
+// Check if WiFi is available for making requests (not in recovery state)
+bool isWifiAvailable() {
+    return wifiState == WIFI_STATE_CONNECTED && WiFi.status() == WL_CONNECTED;
+}
+
+// Check WiFi connection with recovery window before restarting
 void checkWiFi() {
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi disconnected, restarting for recovery...");
-        restartESP();
+    bool connected = (WiFi.status() == WL_CONNECTED);
+
+    switch (wifiState) {
+        case WIFI_STATE_CONNECTED:
+            if (!connected) {
+                // WiFi just disconnected - start recovery
+                wifiState = WIFI_STATE_RECOVERING;
+                wifiDisconnectTime = millis();
+                lastWifiReconnectAttempt = 0;
+                Serial.println("WiFi: Disconnected, entering recovery mode...");
+                updateConnectionStatus();
+            }
+            break;
+
+        case WIFI_STATE_RECOVERING:
+            if (connected) {
+                // WiFi reconnected successfully
+                wifiState = WIFI_STATE_CONNECTED;
+                Serial.println("WiFi: Recovered successfully");
+                time_service_sync();  // Re-sync time after recovery
+                updateConnectionStatus();
+            } else if (millis() - wifiDisconnectTime > WIFI_RECOVERY_TIMEOUT_MS) {
+                // Timeout - trigger restart
+                wifiState = WIFI_STATE_FAILED;
+                Serial.println("WiFi: Recovery timeout, restarting...");
+                restartESP();
+            } else if (millis() - lastWifiReconnectAttempt > WIFI_RECONNECT_ATTEMPT_MS) {
+                // Attempt reconnection
+                lastWifiReconnectAttempt = millis();
+                Serial.printf("WiFi: Reconnecting... (%lu/%lu ms)\n",
+                              millis() - wifiDisconnectTime,
+                              WIFI_RECOVERY_TIMEOUT_MS);
+                WiFi.reconnect();
+            }
+            break;
+
+        case WIFI_STATE_FAILED:
+            // Should not reach here - restarting
+            restartESP();
+            break;
     }
 }
 
@@ -295,7 +347,14 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 void updateConnectionStatus() {
     // Single-threaded mode: no lock needed
     if (ui_labelConnectionStatus) {
-        if (WiFi.status() != WL_CONNECTED) {
+        if (wifiState == WIFI_STATE_RECOVERING) {
+            // Show recovery countdown
+            unsigned long elapsed = (millis() - wifiDisconnectTime) / 1000;
+            char buf[64];
+            snprintf(buf, sizeof(buf), "WiFi: Recovering (%lus)", elapsed);
+            lv_label_set_text(ui_labelConnectionStatus, buf);
+            lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFFA500), LV_PART_MAIN);  // Orange
+        } else if (WiFi.status() != WL_CONNECTED) {
             lv_label_set_text(ui_labelConnectionStatus, "WiFi: Disconnected");
             lv_obj_set_style_text_color(ui_labelConnectionStatus, lv_color_hex(0xFF0000), LV_PART_MAIN);
         } else if (!netIsMqttConnected()) {

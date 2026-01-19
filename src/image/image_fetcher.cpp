@@ -69,6 +69,7 @@ static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* b
 
 // External dependencies
 // (USBSerial defined as Serial macro above)
+extern bool isWifiAvailable();  // Defined in home_panel.ino - checks WiFi recovery state
 
 //***************************************************************************************************
 void imageFetcherInit(const ImageFetcherConfig& config) {
@@ -489,6 +490,12 @@ static void processHTTPResponse() {
 
 //***************************************************************************************************
 bool requestLatestImage() {
+  // Block request if WiFi is recovering
+  if (!isWifiAvailable()) {
+    USBSerial.println("WiFi not available (recovering), ignoring image request");
+    return false;
+  }
+
   lv_obj_t* current_screen = lv_scr_act();
   // Home Panel only has screen1 and screen2
   if (current_screen != cfg.screen1 && current_screen != cfg.screen2) {
@@ -516,6 +523,10 @@ void buttonLatest_event_handler(lv_event_t* e) {
 //***************************************************************************************************
 void buttonNew_event_handler(lv_event_t* e) {
   if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+    if (!isWifiAvailable()) {
+      USBSerial.println("New button clicked but WiFi not available (recovering)");
+      return;
+    }
     USBSerial.println("New button clicked, initiating async request...");
     prepareForRequest();
     pendingEndpoint = "new";
@@ -525,6 +536,10 @@ void buttonNew_event_handler(lv_event_t* e) {
 //***************************************************************************************************
 void buttonBack_event_handler(lv_event_t* e) {
   if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+    if (!isWifiAvailable()) {
+      USBSerial.println("Back button clicked but WiFi not available (recovering)");
+      return;
+    }
     USBSerial.println("Back button clicked, initiating async request...");
     prepareForRequest();
     pendingEndpoint = "back";
