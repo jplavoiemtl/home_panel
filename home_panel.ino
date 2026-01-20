@@ -40,6 +40,7 @@
 #define TOPIC_IMAGE "esp32image"
 #define TOPIC_POWER "ha/hilo_meter_power"
 #define TOPIC_ENERGY "hilo_energie"
+#define TOPIC_WEATHER "weather"
 
 // ============================================================================
 // Global Objects
@@ -341,6 +342,30 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
         Serial.println("Image request received via MQTT");
         requestLatestImage();
     }
+    // Handle weather topic (JSON: {"OutsideTemp": value})
+    else if (strcmp(topic, TOPIC_WEATHER) == 0) {
+        if (ui_labelOutsideTemp) {
+
+            const char* key = "\"OutsideTemp\":";
+            char* pos = strstr(message, key);
+            if (!pos) return;
+
+            pos += strlen(key);
+
+            // Convert directly to float
+            float outsideTemp = strtof(pos, NULL);
+
+            lv_color_t color = outsideTemp < 0 ? lv_palette_main(LV_PALETTE_BLUE)
+                                : outsideTemp > 25 ? lv_palette_main(LV_PALETTE_RED)
+                                : lv_palette_main(LV_PALETTE_GREEN);
+
+            lv_obj_set_style_text_color(ui_labelOutsideTemp, color, 0);
+
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%.1f C", outsideTemp);
+            lv_label_set_text(ui_labelOutsideTemp, buf);
+        }
+    }
 }
 
 // ============================================================================
@@ -455,7 +480,8 @@ void setup() {
         .topics = {
             .image = TOPIC_IMAGE,
             .power = TOPIC_POWER,
-            .energy = TOPIC_ENERGY
+            .energy = TOPIC_ENERGY,
+            .weather = TOPIC_WEATHER
         }
     };
     netInit(netCfg);

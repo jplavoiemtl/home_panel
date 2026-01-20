@@ -14,6 +14,7 @@ struct NetTopics {
   const char* image;
   const char* power;
   const char* energy;
+  const char* weather;
 };
 
 struct NetConfig {
