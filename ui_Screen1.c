@@ -78,7 +78,7 @@ void ui_Screen1_screen_init(void)
     ui_labelConnectionStatus = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelConnectionStatus, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelConnectionStatus, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelConnectionStatus, -115);
+    lv_obj_set_x(ui_labelConnectionStatus, 27);
     lv_obj_set_y(ui_labelConnectionStatus, -138);
     lv_obj_set_align(ui_labelConnectionStatus, LV_ALIGN_CENTER);
     lv_label_set_text(ui_labelConnectionStatus, "Status");
@@ -129,8 +129,8 @@ void ui_Screen1_screen_init(void)
     ui_labelTimeDate = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelTimeDate, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelTimeDate, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelTimeDate, 255);
-    lv_obj_set_y(ui_labelTimeDate, -139);
+    lv_obj_set_x(ui_labelTimeDate, 8);
+    lv_obj_set_y(ui_labelTimeDate, -138);
     lv_obj_set_align(ui_labelTimeDate, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelTimeDate, "18 Jan 2026");
     lv_obj_set_style_text_color(ui_labelTimeDate, lv_color_hex(0xB2B2B2), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -140,10 +140,10 @@ void ui_Screen1_screen_init(void)
     ui_labelTime = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelTime, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelTime, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelTime, 22);
-    lv_obj_set_y(ui_labelTime, 14);
+    lv_obj_set_x(ui_labelTime, 26);
+    lv_obj_set_y(ui_labelTime, -76);
     lv_obj_set_align(ui_labelTime, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_labelTime, "21:34:10");
+    lv_label_set_text(ui_labelTime, "--:--:--");
     lv_obj_set_style_text_color(ui_labelTime, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelTime, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelTime, &ui_font_digital100, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -185,7 +185,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_width(ui_electricContainer, 320);
     lv_obj_set_height(ui_electricContainer, 129);
     lv_obj_set_x(ui_electricContainer, -128);
-    lv_obj_set_y(ui_electricContainer, -54);
+    lv_obj_set_y(ui_electricContainer, 52);
     lv_obj_set_align(ui_electricContainer, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_electricContainer, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 

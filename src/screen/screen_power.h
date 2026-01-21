@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 // Configuration constants
-#define SCREEN_ON_TIMEOUT_MS      60000   // 1 minute before dimming
+#define SCREEN_ON_TIMEOUT_MS      120000   // 2 minutes before dimming
 #define SCREEN_DIM_BRIGHTNESS     10      // 10% brightness when dimmed
 
 // Screen power states
