@@ -22,14 +22,16 @@ extern void ui_event_ButtonBack(lv_event_t * e);
 extern lv_obj_t * ui_ButtonBack;
 extern void ui_event_ButtonNew(lv_event_t * e);
 extern lv_obj_t * ui_ButtonNew;
-extern lv_obj_t * ui_labelPowerValue;
-extern lv_obj_t * ui_labelEnergyValue;
-extern lv_obj_t * ui_powerLabel;
-extern lv_obj_t * ui_energyLabel;
 extern lv_obj_t * ui_labelTimeDate;
+extern lv_obj_t * ui_labelTime;
 extern lv_obj_t * ui_outsideContainer;
 extern lv_obj_t * ui_outsideTempIcon;
 extern lv_obj_t * ui_labelOutsideTemp;
+extern lv_obj_t * ui_electricContainer;
+extern lv_obj_t * ui_powerLabel;
+extern lv_obj_t * ui_labelPowerValue;
+extern lv_obj_t * ui_energyLabel;
+extern lv_obj_t * ui_labelEnergyValue;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

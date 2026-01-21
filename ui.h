@@ -45,6 +45,9 @@ LV_IMG_DECLARE(ui_img_button_back_png);    // assets/button_back.png
 LV_IMG_DECLARE(ui_img_button_new_png);    // assets/button_new.png
 LV_IMG_DECLARE(ui_img_outside_temp2_png);    // assets/outside_temp2.png
 
+// FONTS
+LV_FONT_DECLARE(ui_font_digital100);
+
 // UI INIT
 void ui_init(void);
 void ui_destroy(void);
