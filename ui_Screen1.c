@@ -143,7 +143,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_x(ui_labelTime, 26);
     lv_obj_set_y(ui_labelTime, -76);
     lv_obj_set_align(ui_labelTime, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_labelTime, "11:--:--");
+    lv_label_set_text(ui_labelTime, "--:--:--");
     lv_obj_set_style_text_color(ui_labelTime, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelTime, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelTime, &ui_font_dsdigib100, LV_PART_MAIN | LV_STATE_DEFAULT);
