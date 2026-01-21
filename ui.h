@@ -47,6 +47,7 @@ LV_IMG_DECLARE(ui_img_outside_temp2_png);    // assets/outside_temp2.png
 
 // FONTS
 LV_FONT_DECLARE(ui_font_digital100);
+LV_FONT_DECLARE(ui_font_dsdigib100);
 
 // UI INIT
 void ui_init(void);
