@@ -182,7 +182,7 @@ void ui_Screen1_screen_init(void)
 
     ui_electricContainer = lv_obj_create(ui_Screen1);
     lv_obj_remove_style_all(ui_electricContainer);
-    lv_obj_set_width(ui_electricContainer, 320);
+    lv_obj_set_width(ui_electricContainer, 354);
     lv_obj_set_height(ui_electricContainer, 129);
     lv_obj_set_x(ui_electricContainer, -128);
     lv_obj_set_y(ui_electricContainer, 52);
@@ -203,7 +203,7 @@ void ui_Screen1_screen_init(void)
     ui_labelPowerValue = lv_label_create(ui_electricContainer);
     lv_obj_set_width(ui_labelPowerValue, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelPowerValue, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelPowerValue, 138);
+    lv_obj_set_x(ui_labelPowerValue, 154);
     lv_obj_set_y(ui_labelPowerValue, -48);
     lv_obj_set_align(ui_labelPowerValue, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelPowerValue, "--");
@@ -225,7 +225,7 @@ void ui_Screen1_screen_init(void)
     ui_labelEnergyValue = lv_label_create(ui_electricContainer);
     lv_obj_set_width(ui_labelEnergyValue, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelEnergyValue, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelEnergyValue, 138);
+    lv_obj_set_x(ui_labelEnergyValue, 154);
     lv_obj_set_y(ui_labelEnergyValue, -7);
     lv_obj_set_align(ui_labelEnergyValue, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelEnergyValue, "--");
