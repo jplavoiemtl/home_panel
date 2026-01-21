@@ -66,10 +66,28 @@ static void prepareForRequest();
 static bool requestImage(const char* endpoint_type);
 static void processHTTPResponse();
 static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap);
+static void button2_pressed_handler(lv_event_t* e);
+
 
 // External dependencies
 // (USBSerial defined as Serial macro above)
 extern bool isWifiAvailable();  // Defined in home_panel.ino - checks WiFi recovery state
+
+// Handler for Button2 press - disables touch to prevent carryover to Screen1
+static void button2_pressed_handler(lv_event_t* e) {
+  if (lv_event_get_code(e) != LV_EVENT_PRESSED) return;
+
+  // Disable touch input immediately when Button2 is pressed
+  lv_indev_t* indev = lv_indev_get_next(NULL);
+  if (indev) lv_indev_enable(indev, false);
+
+  // Re-enable touch input after debounce period (300ms)
+  lv_timer_create([](lv_timer_t* timer) {
+    lv_indev_t* indev = lv_indev_get_next(NULL);
+    if (indev) lv_indev_enable(indev, true);
+    lv_timer_del(timer);  // One-shot timer
+  }, 300, NULL);
+}
 
 //***************************************************************************************************
 void imageFetcherInit(const ImageFetcherConfig& config) {
@@ -89,6 +107,12 @@ void imageFetcherInit(const ImageFetcherConfig& config) {
   // Attach screen2 event handler for SCREEN_LOADED and SCREEN_UNLOAD_START events
   if (cfg.screen2) {
     lv_obj_add_event_cb(cfg.screen2, screen2_event_handler, LV_EVENT_ALL, NULL);
+  }
+
+  // Attach Button2 press handler for touch debounce when exiting Screen2
+  extern lv_obj_t* ui_Button2;
+  if (ui_Button2) {
+    lv_obj_add_event_cb(ui_Button2, button2_pressed_handler, LV_EVENT_PRESSED, NULL);
   }
 }
 
