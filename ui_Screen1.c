@@ -132,7 +132,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_x(ui_labelTimeDate, 255);
     lv_obj_set_y(ui_labelTimeDate, -139);
     lv_obj_set_align(ui_labelTimeDate, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_labelTimeDate, "18 Jan 2026, 14:31:10");
+    lv_label_set_text(ui_labelTimeDate, "18 Jan 2026");
     lv_obj_set_style_text_color(ui_labelTimeDate, lv_color_hex(0xB2B2B2), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelTimeDate, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelTimeDate, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -141,10 +141,10 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_width(ui_labelTime, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelTime, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_labelTime, 22);
-    lv_obj_set_y(ui_labelTime, 19);
+    lv_obj_set_y(ui_labelTime, 14);
     lv_obj_set_align(ui_labelTime, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelTime, "21:34:10");
-    lv_obj_set_style_text_color(ui_labelTime, lv_color_hex(0xB40101), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui_labelTime, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelTime, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelTime, &ui_font_digital100, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -152,8 +152,8 @@ void ui_Screen1_screen_init(void)
     lv_obj_remove_style_all(ui_outsideContainer);
     lv_obj_set_width(ui_outsideContainer, 87);
     lv_obj_set_height(ui_outsideContainer, 91);
-    lv_obj_set_x(ui_outsideContainer, 194);
-    lv_obj_set_y(ui_outsideContainer, -88);
+    lv_obj_set_x(ui_outsideContainer, 196);
+    lv_obj_set_y(ui_outsideContainer, -120);
     lv_obj_set_align(ui_outsideContainer, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_outsideContainer, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
@@ -175,7 +175,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_x(ui_labelOutsideTemp, 5);
     lv_obj_set_y(ui_labelOutsideTemp, 32);
     lv_obj_set_align(ui_labelOutsideTemp, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_labelOutsideTemp, "-46.9 C");
+    lv_label_set_text(ui_labelOutsideTemp, "");
     lv_obj_set_style_text_color(ui_labelOutsideTemp, lv_color_hex(0xC8C8C8), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_labelOutsideTemp, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelOutsideTemp, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -11,7 +11,8 @@
 // Features:
 // - NTP sync on boot and every 6 hours
 // - 1-second LVGL timer for label updates
-// - Format: "18 Jan 2026, 14:31:10"
+// - Updates labelTimeDate with date: "18 Jan 2026"
+// - Updates labelTime with time: "21:34:10"
 // ============================================================================
 
 // Initialize time service (call after WiFi is connected)
@@ -24,9 +25,13 @@ void time_service_init();
 // Call this when WiFi reconnects after being disconnected
 void time_service_sync();
 
+// Get formatted date string
+// Returns: "18 Jan 2026" or error string if not initialized
+String time_service_getFormattedDate();
+
 // Get formatted time string
-// Returns: "18 Jan 2026, 14:31:10" or error string if not initialized
-String time_service_getFormatted();
+// Returns: "21:34:10" or error string if not initialized
+String time_service_getFormattedTime();
 
 // Check if time has been successfully initialized
 bool time_service_isInitialized();

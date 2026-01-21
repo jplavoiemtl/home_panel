@@ -87,49 +87,47 @@ static void initTime(const char* timezone) {
     }
 }
 
-// Format time string: "18 Jan 2026, 14:31:10"
-static String formatTimeString(struct tm* timeinfo) {
-    char buffer[32];
-
-    // Day without leading zero, month abbreviation, year, time with leading zeros
-    snprintf(buffer, sizeof(buffer), "%d %s %04d, %02d:%02d:%02d",
+// Format date string: "18 Jan 2026"
+static String formatDateString(struct tm* timeinfo) {
+    char buffer[16];
+    snprintf(buffer, sizeof(buffer), "%d %s %04d",
              timeinfo->tm_mday,
              MONTHS[timeinfo->tm_mon],
-             timeinfo->tm_year + 1900,
-             timeinfo->tm_hour,
-             timeinfo->tm_min,
-             timeinfo->tm_sec);
-
+             timeinfo->tm_year + 1900);
     return String(buffer);
 }
 
-// LVGL timer callback - updates label once per second
-static void labelTimerCallback(lv_timer_t* timer) {
-    if (!ui_labelTimeDate) return;
+// Format time string: "21:34:10"
+static String formatTimeOnlyString(struct tm* timeinfo) {
+    char buffer[12];
+    snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d",
+             timeinfo->tm_hour,
+             timeinfo->tm_min,
+             timeinfo->tm_sec);
+    return String(buffer);
+}
 
+// LVGL timer callback - updates labels once per second
+static void labelTimerCallback(lv_timer_t* timer) {
     struct tm timeinfo;
 
     if (!timeInitialized) {
-        lv_label_set_text(ui_labelTimeDate, "Syncing time...");
-        return;
-    }
-
-    if (WiFi.status() != WL_CONNECTED) {
-        // WiFi disconnected - still show time from internal clock
-        if (getLocalTime(&timeinfo)) {
-            String timeStr = formatTimeString(&timeinfo);
-            lv_label_set_text(ui_labelTimeDate, timeStr.c_str());
-        }
+        if (ui_labelTimeDate) lv_label_set_text(ui_labelTimeDate, "Syncing...");
+        if (ui_labelTime) lv_label_set_text(ui_labelTime, "--:--:--");
         return;
     }
 
     if (!getLocalTime(&timeinfo)) {
-        lv_label_set_text(ui_labelTimeDate, "-- --- ----, --:--:--");
+        if (ui_labelTimeDate) lv_label_set_text(ui_labelTimeDate, "-- --- ----");
+        if (ui_labelTime) lv_label_set_text(ui_labelTime, "--:--:--");
         return;
     }
 
-    String timeStr = formatTimeString(&timeinfo);
-    lv_label_set_text(ui_labelTimeDate, timeStr.c_str());
+    String dateStr = formatDateString(&timeinfo);
+    String timeStr = formatTimeOnlyString(&timeinfo);
+
+    if (ui_labelTimeDate) lv_label_set_text(ui_labelTimeDate, dateStr.c_str());
+    if (ui_labelTime) lv_label_set_text(ui_labelTime, timeStr.c_str());
 }
 
 // LVGL timer callback - periodic NTP re-sync
@@ -178,18 +176,32 @@ void time_service_sync() {
     }
 }
 
-String time_service_getFormatted() {
+String time_service_getFormattedDate() {
     struct tm timeinfo;
 
     if (!timeInitialized) {
-        return "Syncing time...";
+        return "Syncing...";
     }
 
     if (!getLocalTime(&timeinfo)) {
-        return "-- --- ----, --:--:--";
+        return "-- --- ----";
     }
 
-    return formatTimeString(&timeinfo);
+    return formatDateString(&timeinfo);
+}
+
+String time_service_getFormattedTime() {
+    struct tm timeinfo;
+
+    if (!timeInitialized) {
+        return "--:--:--";
+    }
+
+    if (!getLocalTime(&timeinfo)) {
+        return "--:--:--";
+    }
+
+    return formatTimeOnlyString(&timeinfo);
 }
 
 bool time_service_isInitialized() {
