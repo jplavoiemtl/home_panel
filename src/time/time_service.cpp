@@ -23,6 +23,7 @@ static const char* NTP_SERVER = "pool.ntp.org";
 // Update intervals
 static const uint32_t LABEL_UPDATE_MS = 1000;        // 1 second
 static const uint32_t NTP_SYNC_INTERVAL_MS = 21600000; // 6 hours in ms
+static const uint32_t NTP_RETRY_INTERVAL_MS = 30000;  // 30 seconds retry on failure
 
 // ============================================================================
 // Private State
@@ -32,6 +33,7 @@ static bool timeInitialized = false;
 static unsigned long lastNtpSync = 0;
 static lv_timer_t* labelTimer = nullptr;
 static lv_timer_t* syncTimer = nullptr;
+static lv_timer_t* retryTimer = nullptr;
 
 // Month abbreviations
 static const char* MONTHS[] = {
@@ -49,6 +51,9 @@ static void setTimezone(const char* timezone) {
     setenv("TZ", timezone, 1);
     tzset();
 }
+
+// Forward declaration for retry callback
+static void retryTimerCallback(lv_timer_t* timer);
 
 // Initialize time from NTP (from reference ntp.ino)
 static void initTime(const char* timezone) {
@@ -69,10 +74,23 @@ static void initTime(const char* timezone) {
 
     if (retries >= 10) {
         Serial.println("Time: Failed to obtain time from NTP");
+
+        // Schedule a retry if not already scheduled
+        if (!retryTimer && WiFi.status() == WL_CONNECTED) {
+            Serial.println("Time: Scheduling retry in 30 seconds...");
+            retryTimer = lv_timer_create(retryTimerCallback, NTP_RETRY_INTERVAL_MS, nullptr);
+        }
         return;
     }
 
     Serial.println("Time: Got time from NTP");
+
+    // Cancel retry timer if it exists (sync succeeded)
+    if (retryTimer) {
+        lv_timer_del(retryTimer);
+        retryTimer = nullptr;
+        Serial.println("Time: Cancelled retry timer (sync successful)");
+    }
 
     // Now set the real timezone
     setTimezone(timezone);
@@ -84,6 +102,23 @@ static void initTime(const char* timezone) {
     if (getLocalTime(&timeinfo)) {
         Serial.printf("Time: Current time: %02d:%02d:%02d\n",
                       timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    }
+}
+
+// LVGL timer callback - retry NTP sync after failure
+static void retryTimerCallback(lv_timer_t* timer) {
+    if (timeInitialized) {
+        // Already synced, cancel retry timer
+        if (retryTimer) {
+            lv_timer_del(retryTimer);
+            retryTimer = nullptr;
+        }
+        return;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("Time: Retrying NTP sync...");
+        initTime(TIMEZONE);
     }
 }
 
