@@ -27,7 +27,8 @@ extern lv_obj_t * ui_labelEnergyValue;
 extern lv_obj_t * ui_powerLabel;
 extern lv_obj_t * ui_energyLabel;
 extern lv_obj_t * ui_labelTimeDate;
-extern lv_obj_t * ui_outsideLabel;
+extern lv_obj_t * ui_outsideContainer;
+extern lv_obj_t * ui_outsideTempIcon;
 extern lv_obj_t * ui_labelOutsideTemp;
 // CUSTOM VARIABLES
 

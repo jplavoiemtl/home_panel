@@ -43,6 +43,7 @@ extern lv_obj_t * ui____initial_actions0;
 LV_IMG_DECLARE(ui_img_button_latst_png);    // assets/button_latst.png
 LV_IMG_DECLARE(ui_img_button_back_png);    // assets/button_back.png
 LV_IMG_DECLARE(ui_img_button_new_png);    // assets/button_new.png
+LV_IMG_DECLARE(ui_img_outside_temp2_png);    // assets/outside_temp2.png
 
 // UI INIT
 void ui_init(void);
