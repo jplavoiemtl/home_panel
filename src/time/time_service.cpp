@@ -24,6 +24,18 @@ static const char* NTP_SERVER = "pool.ntp.org";
 static const uint32_t LABEL_UPDATE_MS = 1000;        // 1 second
 static const uint32_t NTP_SYNC_INTERVAL_MS = 21600000; // 6 hours in ms
 static const uint32_t NTP_RETRY_INTERVAL_MS = 30000;  // 30 seconds retry on failure
+static const uint32_t COLOR_CHANGE_INTERVAL_MS = 1200000; // 20 min in ms
+
+// Time label colors (cycle randomly)
+static const uint32_t TIME_LABEL_COLORS[] = {
+    0xFF0000,  // Red
+    0x03FF00,  // Green
+    0xD42BFE,  // Purple
+    0xFF2C00,  // Deep Orange
+    0xFC8B03,  // orange
+    0x0388FC   // Blue
+};
+static const size_t TIME_LABEL_COLORS_COUNT = sizeof(TIME_LABEL_COLORS) / sizeof(TIME_LABEL_COLORS[0]);
 
 // ============================================================================
 // Private State
@@ -34,6 +46,7 @@ static unsigned long lastNtpSync = 0;
 static lv_timer_t* labelTimer = nullptr;
 static lv_timer_t* syncTimer = nullptr;
 static lv_timer_t* retryTimer = nullptr;
+static lv_timer_t* colorTimer = nullptr;
 
 // Month abbreviations
 static const char* MONTHS[] = {
@@ -173,6 +186,17 @@ static void syncTimerCallback(lv_timer_t* timer) {
     }
 }
 
+// LVGL timer callback - change time label color randomly
+static void colorTimerCallback(lv_timer_t* timer) {
+    if (!ui_labelTime) return;
+
+    // Pick a random color from the array
+    size_t colorIndex = random(TIME_LABEL_COLORS_COUNT);
+    uint32_t color = TIME_LABEL_COLORS[colorIndex];
+
+    lv_obj_set_style_text_color(ui_labelTime, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
 // ============================================================================
 // Public API
 // ============================================================================
@@ -197,6 +221,12 @@ void time_service_init() {
     syncTimer = lv_timer_create(syncTimerCallback, NTP_SYNC_INTERVAL_MS, nullptr);
     if (syncTimer) {
         Serial.println("Time: Created 6-hour NTP sync timer");
+    }
+
+    // Create LVGL timer for color changes
+    colorTimer = lv_timer_create(colorTimerCallback, COLOR_CHANGE_INTERVAL_MS, nullptr);
+    if (colorTimer) {
+        Serial.printf("Time: Created %d-second color change timer\n", COLOR_CHANGE_INTERVAL_MS / 1000);
     }
 
     Serial.println("Time: Time service initialized");
@@ -247,10 +277,16 @@ void time_service_pause() {
     if (labelTimer) {
         lv_timer_pause(labelTimer);
     }
+    if (colorTimer) {
+        lv_timer_pause(colorTimer);
+    }
 }
 
 void time_service_resume() {
     if (labelTimer) {
         lv_timer_resume(labelTimer);
+    }
+    if (colorTimer) {
+        lv_timer_resume(colorTimer);
     }
 }
