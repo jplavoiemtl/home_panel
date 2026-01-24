@@ -12,13 +12,17 @@ lv_obj_t * ui_ButtonBack = NULL;
 lv_obj_t * ui_ButtonNew = NULL;
 lv_obj_t * ui_labelTimeDate = NULL;
 lv_obj_t * ui_labelTime = NULL;
-lv_obj_t * ui_labelOutsideTemp = NULL;
 lv_obj_t * ui_electricContainer = NULL;
 lv_obj_t * ui_powerLabel = NULL;
 lv_obj_t * ui_labelPowerValue = NULL;
 lv_obj_t * ui_energyLabel = NULL;
 lv_obj_t * ui_labelEnergyValue = NULL;
+lv_obj_t * ui_tempContainer = NULL;
 lv_obj_t * ui_thermometer = NULL;
+lv_obj_t * ui_ButtonTempLoc = NULL;
+lv_obj_t * ui_tempLocLabel = NULL;
+lv_obj_t * ui_tempTimeLabel = NULL;
+lv_obj_t * ui_labelOutsideTemp = NULL;
 // event funtions
 void ui_event_Screen1(lv_event_t * e)
 {
@@ -147,17 +151,6 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_text_opa(ui_labelTime, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelTime, &ui_font_dsdigib100, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_labelOutsideTemp = lv_label_create(ui_Screen1);
-    lv_obj_set_width(ui_labelOutsideTemp, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_labelOutsideTemp, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelOutsideTemp, 378);
-    lv_obj_set_y(ui_labelOutsideTemp, -138);
-    lv_obj_set_align(ui_labelOutsideTemp, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_labelOutsideTemp, "");
-    lv_obj_set_style_text_color(ui_labelOutsideTemp, lv_color_hex(0xC8C8C8), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_labelOutsideTemp, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_labelOutsideTemp, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
-
     ui_electricContainer = lv_obj_create(ui_Screen1);
     lv_obj_remove_style_all(ui_electricContainer);
     lv_obj_set_width(ui_electricContainer, 354);
@@ -211,16 +204,62 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_text_opa(ui_labelEnergyValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_labelEnergyValue, &lv_font_montserrat_36, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_thermometer = lv_img_create(ui_Screen1);
+    ui_tempContainer = lv_obj_create(ui_Screen1);
+    lv_obj_remove_style_all(ui_tempContainer);
+    lv_obj_set_width(ui_tempContainer, 134);
+    lv_obj_set_height(ui_tempContainer, 137);
+    lv_obj_set_x(ui_tempContainer, 188);
+    lv_obj_set_y(ui_tempContainer, -99);
+    lv_obj_set_align(ui_tempContainer, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_tempContainer, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+
+    ui_thermometer = lv_img_create(ui_tempContainer);
     lv_img_set_src(ui_thermometer, &ui_img_thermometer3_png);
     lv_obj_set_width(ui_thermometer, LV_SIZE_CONTENT);   /// 55
     lv_obj_set_height(ui_thermometer, LV_SIZE_CONTENT);    /// 172
-    lv_obj_set_x(ui_thermometer, 227);
-    lv_obj_set_y(ui_thermometer, -122);
+    lv_obj_set_x(ui_thermometer, 39);
+    lv_obj_set_y(ui_thermometer, -31);
     lv_obj_set_align(ui_thermometer, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_thermometer, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
     lv_obj_clear_flag(ui_thermometer, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_img_set_zoom(ui_thermometer, 100);
+    lv_img_set_zoom(ui_thermometer, 80);
+
+    ui_ButtonTempLoc = lv_btn_create(ui_tempContainer);
+    lv_obj_set_width(ui_ButtonTempLoc, 100);
+    lv_obj_set_height(ui_ButtonTempLoc, 36);
+    lv_obj_set_x(ui_ButtonTempLoc, -1);
+    lv_obj_set_y(ui_ButtonTempLoc, 17);
+    lv_obj_set_align(ui_ButtonTempLoc, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_ButtonTempLoc, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_ButtonTempLoc, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+
+    ui_tempLocLabel = lv_label_create(ui_tempContainer);
+    lv_obj_set_width(ui_tempLocLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_tempLocLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_tempLocLabel, -1);
+    lv_obj_set_y(ui_tempLocLabel, 18);
+    lv_obj_set_align(ui_tempLocLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_tempLocLabel, "Outside");
+
+    ui_tempTimeLabel = lv_label_create(ui_tempContainer);
+    lv_obj_set_width(ui_tempTimeLabel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_tempTimeLabel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_tempTimeLabel, -5);
+    lv_obj_set_y(ui_tempTimeLabel, -15);
+    lv_obj_set_align(ui_tempTimeLabel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_tempTimeLabel, "14:52");
+    lv_obj_set_style_text_font(ui_tempTimeLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_labelOutsideTemp = lv_label_create(ui_tempContainer);
+    lv_obj_set_width(ui_labelOutsideTemp, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_labelOutsideTemp, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_labelOutsideTemp, 9);
+    lv_obj_set_y(ui_labelOutsideTemp, -43);
+    lv_obj_set_align(ui_labelOutsideTemp, LV_ALIGN_LEFT_MID);
+    lv_label_set_text(ui_labelOutsideTemp, "-28.5 C");
+    lv_obj_set_style_text_color(ui_labelOutsideTemp, lv_color_hex(0xC8C8C8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_labelOutsideTemp, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_labelOutsideTemp, &lv_font_montserrat_26, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_ButtonLatest, ui_event_ButtonLatest, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ButtonBack, ui_event_ButtonBack, LV_EVENT_ALL, NULL);
@@ -241,12 +280,16 @@ void ui_Screen1_screen_destroy(void)
     ui_ButtonNew = NULL;
     ui_labelTimeDate = NULL;
     ui_labelTime = NULL;
-    ui_labelOutsideTemp = NULL;
     ui_electricContainer = NULL;
     ui_powerLabel = NULL;
     ui_labelPowerValue = NULL;
     ui_energyLabel = NULL;
     ui_labelEnergyValue = NULL;
+    ui_tempContainer = NULL;
     ui_thermometer = NULL;
+    ui_ButtonTempLoc = NULL;
+    ui_tempLocLabel = NULL;
+    ui_tempTimeLabel = NULL;
+    ui_labelOutsideTemp = NULL;
 
 }

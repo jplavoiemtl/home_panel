@@ -16,8 +16,7 @@ struct LocationMeta {
 
 const LocationMeta locationMeta[] = {
     { "Outside", "OutsideTemp" },
-    { "Ambient", "AmbientTemp" },
-    { "Kitchen", "KitchenTemp" }
+    { "Salon", "AmbientTemp" }
 };
 
 constexpr size_t TEMP_LOC_COUNT = sizeof(locationMeta) / sizeof(locationMeta[0]);
@@ -225,7 +224,14 @@ void temperature_service_loop() {
 }
 
 void buttonTempLocation_event_handler(lv_event_t* e) {
+    static unsigned long lastClickTime = 0;
+    constexpr unsigned long CLICK_DEBOUNCE_MS = 300;
+
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
-        temperature_service_cycleLocation();
+        unsigned long now = millis();
+        if (now - lastClickTime >= CLICK_DEBOUNCE_MS) {
+            lastClickTime = now;
+            temperature_service_cycleLocation();
+        }
     }
 }

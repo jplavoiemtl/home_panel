@@ -440,6 +440,11 @@ void setup() {
     // Initialize LVGL UI (single-threaded mode, no lock needed)
     Serial.println("Initializing UI...");
     ui_init();
+
+    // Wire temperature location button to cycling handler
+    if (ui_ButtonTempLoc) {
+        lv_obj_add_event_cb(ui_ButtonTempLoc, buttonTempLocation_event_handler, LV_EVENT_CLICKED, NULL);
+    }
     Serial.println("UI initialized");
 
     // Show connect screen before WiFi attempt
@@ -493,12 +498,7 @@ void setup() {
     time_service_init();
 
     // Initialize temperature service (cycling display)
-    // TODO: Create these labels in SquareLine Studio:
-    //   - ui_labelTempLoc: location name (e.g., "Outside")
-    //   - ui_labelTempTime: sample time (e.g., "14:57")
-    // The existing ui_labelOutsideTemp is reused for temperature value.
-    // Also create ui_ButtonTempLocation button and wire to buttonTempLocation_event_handler()
-    temperature_service_init(nullptr, ui_labelOutsideTemp, nullptr);
+    temperature_service_init(ui_tempLocLabel, ui_labelOutsideTemp, ui_tempTimeLabel);
 
     Serial.println("=== Setup Complete ===\n");
 }
