@@ -156,6 +156,28 @@ static void cleanupImageRequest() {
 }
 
 //***************************************************************************************************
+// Helper to return to Screen 1 on error or timeout
+static void returnToScreen1(const char* reason) {
+  USBSerial.printf("Returning to Screen 1: %s\n", reason);
+
+  if (httpState != HTTP_IDLE && httpState != HTTP_COMPLETE) {
+    cleanupImageRequest();
+    httpState = HTTP_ERROR;
+  }
+
+  requestInProgress = false;
+  screen2TimeoutActive = false;
+  imageDisplayTimeoutActive = false;
+
+  time_service_resume();
+  if (ui_previous_screen) {
+    lv_disp_load_scr(ui_previous_screen);
+  } else if (cfg.screen1) {
+    lv_disp_load_scr(cfg.screen1);
+  }
+}
+
+//***************************************************************************************************
 static void prepareForRequest() {
   cleanupImageRequest();
 
@@ -200,10 +222,7 @@ void imageFetcherLoop() {
     const char* endpoint = pendingEndpoint;
     pendingEndpoint = nullptr; // Clear it immediately
     if (!requestImage(endpoint)) {
-      USBSerial.println("Async request failed to initiate.");
-      requestInProgress = false;
-      // If we failed and are stuck on Screen 2, maybe go back?
-      // For now we just allow the timeout to return us to Screen 1.
+      returnToScreen1("HTTP request failed to initiate");
     }
     return;
   }
@@ -214,41 +233,14 @@ void imageFetcherLoop() {
   if (cfg.screen2 && lv_scr_act() == cfg.screen2) {
     // Loading timeout
     if (screen2TimeoutActive && millis() - screenTransitionTime > SCREEN2_LOADING_TIMEOUT) {
-      USBSerial.println("Screen 2 timeout - image loading took too long, returning to Screen 1");
-
-      if (httpState != HTTP_IDLE && httpState != HTTP_COMPLETE) {
-        cleanupImageRequest();
-        httpState = HTTP_ERROR;
-      }
-
-      requestInProgress = false;
-      screen2TimeoutActive = false;
-      imageDisplayTimeoutActive = false;
-
-      time_service_resume();  // Resume timer when returning to Screen1
-      if (ui_previous_screen) {
-        lv_disp_load_scr(ui_previous_screen);
-      } else if (cfg.screen1) {
-        lv_disp_load_scr(cfg.screen1);
-      }
+      returnToScreen1("image loading took too long");
     }
 
     // Display timeout (after successful load)
     if (imageDisplayTimeoutActive) {
       unsigned long elapsed = millis() - imageDisplayStartTime;
       if (elapsed > SCREEN2_DISPLAY_TIMEOUT) {
-        USBSerial.println("Screen 2 display timeout - 1 minute elapsed, returning to Screen 1");
-
-        requestInProgress = false;
-        screen2TimeoutActive = false;
-        imageDisplayTimeoutActive = false;
-
-        time_service_resume();  // Resume timer when returning to Screen1
-        if (ui_previous_screen) {
-          lv_disp_load_scr(ui_previous_screen);
-        } else if (cfg.screen1) {
-          lv_disp_load_scr(cfg.screen1);
-        }
+        returnToScreen1("display timeout (1 minute elapsed)");
       }
     }
   }
@@ -507,7 +499,7 @@ static void processHTTPResponse() {
 
   if (httpState == HTTP_ERROR) {
     httpState = HTTP_IDLE;
-    requestInProgress = false;
+    returnToScreen1("HTTP error during request");
     return;
   }
 }

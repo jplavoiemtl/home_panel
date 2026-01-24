@@ -23,3 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Add blank lines after bold headers before their associated lists
    - Add blank lines before code blocks that follow text
    - Ensure nested lists have proper spacing
+
+8. **No compiler available**: There is no compiler available in this environment. The user compiles the project themselves. Do not attempt to compile or build the project.
+
+9. **Always push commits**: When creating a git commit, always push to the remote repository as well.
