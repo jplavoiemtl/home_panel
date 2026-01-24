@@ -22,6 +22,7 @@
 #include "src/image/image_fetcher.h"
 #include "src/screen/screen_power.h"
 #include "src/time/time_service.h"
+#include "src/temperature/temperature_service.h"
 
 // Secrets (credentials)
 #include "secrets_private.h"
@@ -342,29 +343,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
         Serial.println("Image request received via MQTT");
         requestLatestImage();
     }
-    // Handle weather topic (JSON: {"OutsideTemp": value})
+    // Handle weather topic - route to temperature service
     else if (strcmp(topic, TOPIC_WEATHER) == 0) {
-        if (ui_labelOutsideTemp) {
-
-            const char* key = "\"OutsideTemp\":";
-            char* pos = strstr(message, key);
-            if (!pos) return;
-
-            pos += strlen(key);
-
-            // Convert directly to float
-            float outsideTemp = strtof(pos, NULL);
-
-            lv_color_t color = outsideTemp < 0 ? lv_palette_main(LV_PALETTE_BLUE)
-                                : outsideTemp > 25 ? lv_palette_main(LV_PALETTE_RED)
-                                : lv_palette_main(LV_PALETTE_GREEN);
-
-            lv_obj_set_style_text_color(ui_labelOutsideTemp, color, 0);
-
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%.1f C", outsideTemp);
-            lv_label_set_text(ui_labelOutsideTemp, buf);
-        }
+        temperature_service_handleMQTT(message);
     }
 }
 
@@ -511,6 +492,14 @@ void setup() {
     // Initialize time service (NTP sync + label updates)
     time_service_init();
 
+    // Initialize temperature service (cycling display)
+    // TODO: Create these labels in SquareLine Studio:
+    //   - ui_labelTempLoc: location name (e.g., "Outside")
+    //   - ui_labelTempTime: sample time (e.g., "14:57")
+    // The existing ui_labelOutsideTemp is reused for temperature value.
+    // Also create ui_ButtonTempLocation button and wire to buttonTempLocation_event_handler()
+    temperature_service_init(nullptr, ui_labelOutsideTemp, nullptr);
+
     Serial.println("=== Setup Complete ===\n");
 }
 
@@ -555,6 +544,9 @@ void loop() {
 
     // Screen power management (auto-dim after inactivity)
     screenPowerLoop();
+
+    // Temperature service (NVS debounce save)
+    temperature_service_loop();
 
     // Small delay to prevent watchdog issues and yield to other tasks
     delay(2);
