@@ -93,7 +93,7 @@ lv_color_t getTemperatureColor(float temp) {
     } else if (temp > 25) {
         return lv_palette_main(LV_PALETTE_RED);
     } else {
-        return lv_palette_main(LV_PALETTE_GREEN);
+        return lv_palette_main(LV_PALETTE_ORANGE);
     }
 }
 
