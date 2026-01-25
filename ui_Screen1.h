@@ -31,6 +31,7 @@ extern lv_obj_t * ui_energyLabel;
 extern lv_obj_t * ui_labelEnergyValue;
 extern lv_obj_t * ui_tempContainer;
 extern lv_obj_t * ui_thermometer;
+extern void ui_event_ButtonTempLoc(lv_event_t * e);
 extern lv_obj_t * ui_ButtonTempLoc;
 extern lv_obj_t * ui_tempLocLabel;
 extern lv_obj_t * ui_tempTimeLabel;

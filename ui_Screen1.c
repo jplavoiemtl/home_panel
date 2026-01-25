@@ -69,6 +69,15 @@ void ui_event_ButtonNew(lv_event_t * e)
     }
 }
 
+void ui_event_ButtonTempLoc(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if(event_code == LV_EVENT_CLICKED) {
+        activity_event_handler(e);
+    }
+}
+
 // build funtions
 
 void ui_Screen1_screen_init(void)
@@ -81,7 +90,7 @@ void ui_Screen1_screen_init(void)
     ui_labelConnectionStatus = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelConnectionStatus, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelConnectionStatus, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelConnectionStatus, 20);
+    lv_obj_set_x(ui_labelConnectionStatus, 10);
     lv_obj_set_y(ui_labelConnectionStatus, -138);
     lv_obj_set_align(ui_labelConnectionStatus, LV_ALIGN_CENTER);
     lv_label_set_text(ui_labelConnectionStatus, "Status");
@@ -240,6 +249,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_y(ui_tempLocLabel, 18);
     lv_obj_set_align(ui_tempLocLabel, LV_ALIGN_CENTER);
     lv_label_set_text(ui_tempLocLabel, "Outside");
+    lv_obj_set_style_text_font(ui_tempLocLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_tempTimeLabel = lv_label_create(ui_tempContainer);
     lv_obj_set_width(ui_tempTimeLabel, LV_SIZE_CONTENT);   /// 1
@@ -264,6 +274,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_add_event_cb(ui_ButtonLatest, ui_event_ButtonLatest, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ButtonBack, ui_event_ButtonBack, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ButtonNew, ui_event_ButtonNew, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_ButtonTempLoc, ui_event_ButtonTempLoc, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_Screen1, ui_event_Screen1, LV_EVENT_ALL, NULL);
 
 }
