@@ -33,5 +33,13 @@ void temperature_service_cycleLocation();
 // Periodic processing - handles NVS debounce save (call in loop())
 void temperature_service_loop();
 
-// Button event handler for LVGL (can be registered directly)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Button event handler for LVGL (called from SLS-generated C code)
 void buttonTempLocation_event_handler(lv_event_t* e);
+
+#ifdef __cplusplus
+}
+#endif

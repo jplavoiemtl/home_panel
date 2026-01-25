@@ -440,11 +440,6 @@ void setup() {
     // Initialize LVGL UI (single-threaded mode, no lock needed)
     Serial.println("Initializing UI...");
     ui_init();
-
-    // Wire temperature location button to cycling handler
-    if (ui_ButtonTempLoc) {
-        lv_obj_add_event_cb(ui_ButtonTempLoc, buttonTempLocation_event_handler, LV_EVENT_CLICKED, NULL);
-    }
     Serial.println("UI initialized");
 
     // Show connect screen before WiFi attempt

@@ -76,6 +76,9 @@ void ui_event_ButtonTempLoc(lv_event_t * e)
     if(event_code == LV_EVENT_CLICKED) {
         activity_event_handler(e);
     }
+    if(event_code == LV_EVENT_CLICKED) {
+        buttonTempLocation_event_handler(e);
+    }
 }
 
 // build funtions
