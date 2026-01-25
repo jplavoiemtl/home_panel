@@ -57,6 +57,7 @@ lv_obj_t* labelTime = nullptr;
 unsigned long lastLocationChangeTime = 0;
 bool nvsSavePending = false;
 size_t pendingLocation = 0;
+size_t lastSavedLocation = 0;  // Track last saved to avoid redundant writes
 
 Preferences preferences;
 
@@ -75,6 +76,7 @@ void loadLocationFromNVS() {
     } else {
         currentLocation = 0;
     }
+    lastSavedLocation = currentLocation;  // Track what was loaded
     Serial.printf("Temperature service: loaded location %d (%s) from NVS\n",
                   currentLocation, locationMeta[currentLocation].label);
 }
@@ -218,7 +220,10 @@ void temperature_service_cycleLocation() {
 void temperature_service_loop() {
     // Handle NVS debounce save
     if (nvsSavePending && (millis() - lastLocationChangeTime >= NVS_DEBOUNCE_MS)) {
-        saveLocationToNVS(pendingLocation);
+        if (pendingLocation != lastSavedLocation) {
+            saveLocationToNVS(pendingLocation);
+            lastSavedLocation = pendingLocation;
+        }
         nvsSavePending = false;
     }
 }
