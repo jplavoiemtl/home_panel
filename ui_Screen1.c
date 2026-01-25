@@ -152,7 +152,7 @@ void ui_Screen1_screen_init(void)
     ui_labelTime = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_labelTime, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelTime, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelTime, 26);
+    lv_obj_set_x(ui_labelTime, 15);
     lv_obj_set_y(ui_labelTime, -76);
     lv_obj_set_align(ui_labelTime, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelTime, "--:--:--");
