@@ -46,6 +46,9 @@ bool tryMqttConnect() {
     if (cfg.topics.weather) {
       cfg.mqttClient->subscribe(cfg.topics.weather, 1);
     }
+    if (cfg.topics.light) {
+      cfg.mqttClient->subscribe(cfg.topics.light, 1);
+    }
     return true;
   }
   return false;
@@ -116,6 +119,9 @@ void netCheckMqtt(bool bypassRateLimit) {
       }
       if (cfg.topics.weather) {
         cfg.mqttClient->subscribe(cfg.topics.weather, 1);
+      }
+      if (cfg.topics.light) {
+        cfg.mqttClient->subscribe(cfg.topics.light, 1);
       }
     }
   }

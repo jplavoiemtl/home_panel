@@ -23,6 +23,7 @@
 #include "src/screen/screen_power.h"
 #include "src/time/time_service.h"
 #include "src/temperature/temperature_service.h"
+#include "src/light/light_service.h"
 
 // Secrets (credentials)
 #include "secrets_private.h"
@@ -42,6 +43,7 @@
 #define TOPIC_POWER "ha/hilo_meter_power"
 #define TOPIC_ENERGY "hilo_energie"
 #define TOPIC_WEATHER "weather"
+#define TOPIC_LIGHT "m18toggle"
 
 // ============================================================================
 // Global Objects
@@ -347,6 +349,10 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     else if (strcmp(topic, TOPIC_WEATHER) == 0) {
         temperature_service_handleMQTT(message);
     }
+    // Handle light topic - route to light service
+    else if (strcmp(topic, TOPIC_LIGHT) == 0) {
+        light_service_handleMQTT(message);
+    }
 }
 
 // ============================================================================
@@ -462,7 +468,8 @@ void setup() {
             .image = TOPIC_IMAGE,
             .power = TOPIC_POWER,
             .energy = TOPIC_ENERGY,
-            .weather = TOPIC_WEATHER
+            .weather = TOPIC_WEATHER,
+            .light = TOPIC_LIGHT
         }
     };
     netInit(netCfg);
@@ -494,6 +501,9 @@ void setup() {
 
     // Initialize temperature service (cycling display)
     temperature_service_init(ui_tempLocLabel, ui_labelOutsideTemp, ui_tempTimeLabel);
+
+    // Initialize light service (cycling light control)
+    light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel, &mqttClient);
 
     Serial.println("=== Setup Complete ===\n");
 }
@@ -542,6 +552,9 @@ void loop() {
 
     // Temperature service (NVS debounce save)
     temperature_service_loop();
+
+    // Light service (NVS debounce save)
+    light_service_loop();
 
     // Small delay to prevent watchdog issues and yield to other tasks
     delay(2);

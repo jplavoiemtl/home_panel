@@ -230,7 +230,7 @@ void temperature_service_loop() {
 
 void buttonTempLocation_event_handler(lv_event_t* e) {
     static unsigned long lastClickTime = 0;
-    constexpr unsigned long CLICK_DEBOUNCE_MS = 300;
+    constexpr unsigned long CLICK_DEBOUNCE_MS = 500;
 
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         unsigned long now = millis();

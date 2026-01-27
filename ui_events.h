@@ -11,6 +11,8 @@ extern "C" {
 #endif
 
 void activity_event_handler(lv_event_t * e);
+void buttonLight_event_handler(lv_event_t * e);
+void buttonSelectLight_event_handler(lv_event_t * e);
 void buttonLatest_event_handler(lv_event_t * e);
 void buttonBack_event_handler(lv_event_t * e);
 void buttonNew_event_handler(lv_event_t * e);
