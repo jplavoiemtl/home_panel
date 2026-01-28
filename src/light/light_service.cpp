@@ -12,6 +12,7 @@ static const char PAYLOAD_SAL[] = "salon";
 static const char PAYLOAD_STA[] = "statue";
 static const char PAYLOAD_GAL[] = "galerie";
 static const char PAYLOAD_PIS[] = "piscine";
+static const char PAYLOAD_BJP[] = "bureaujp";
 
 // Status payloads (received from Node-RED)
 static const char CUISINE_ON[]  = "cu_on";
@@ -24,6 +25,8 @@ static const char GALERIE_ON[]  = "ga_on";
 static const char GALERIE_OFF[] = "ga_of";
 static const char PISCINE_ON[]  = "pi_on";
 static const char PISCINE_OFF[] = "pi_of";
+static const char BURJP_ON[]  = "bj_on";
+static const char BURJP_OFF[] = "bj_of";
 
 // MQTT topic for light commands and status
 static const char TOPIC_LIGHT[] = "m18toggle";
@@ -53,6 +56,7 @@ static const LightMeta lightMeta[] = {
     { "Statue",   PAYLOAD_STA, STATUE_ON,   STATUE_OFF   },
     { "Galerie",  PAYLOAD_GAL, GALERIE_ON,  GALERIE_OFF  },
     { "Piscine",  PAYLOAD_PIS, PISCINE_ON,  PISCINE_OFF  },
+    { "Bureau JP",PAYLOAD_BJP, BURJP_ON,    BURJP_OFF    },    
 };
 
 static constexpr size_t LIGHT_COUNT = sizeof(lightMeta) / sizeof(lightMeta[0]);
@@ -243,7 +247,7 @@ void buttonSelectLight_event_handler(lv_event_t* e) {
 
 void buttonLight_event_handler(lv_event_t* e) {
     static unsigned long lastClickTime = 0;
-    constexpr unsigned long CLICK_DEBOUNCE_MS = 300;
+    constexpr unsigned long CLICK_DEBOUNCE_MS = 500;
 
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         unsigned long now = millis();
