@@ -46,6 +46,7 @@ extern lv_obj_t * ui_tempTimeLabel;
 extern lv_obj_t * ui_labelOutsideTemp;
 extern lv_obj_t * ui_lightOFFImage;
 extern lv_obj_t * ui_lightONImage;
+extern lv_obj_t * ui_Label1;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

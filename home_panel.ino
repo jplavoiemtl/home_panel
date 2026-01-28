@@ -328,7 +328,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     if (strcmp(topic, TOPIC_POWER) == 0) {
         if (ui_labelPowerValue) {
             char buf[32];
-            snprintf(buf, sizeof(buf), "%s W", message);
+            snprintf(buf, sizeof(buf), "%s %s W", LV_SYMBOL_HOME, message);
             lv_label_set_text(ui_labelPowerValue, buf);
         }
     }
