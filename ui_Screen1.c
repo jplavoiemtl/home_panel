@@ -130,13 +130,15 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_text_font(ui_labelConnectionStatus, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_ButtonLight = lv_btn_create(ui_Screen1);
-    lv_obj_set_width(ui_ButtonLight, 100);
-    lv_obj_set_height(ui_ButtonLight, 36);
-    lv_obj_set_x(ui_ButtonLight, 184);
-    lv_obj_set_y(ui_ButtonLight, 135);
+    lv_obj_set_width(ui_ButtonLight, 108);
+    lv_obj_set_height(ui_ButtonLight, 46);
+    lv_obj_set_x(ui_ButtonLight, 181);
+    lv_obj_set_y(ui_ButtonLight, 131);
     lv_obj_set_align(ui_ButtonLight, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_ButtonLight, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_ButtonLight, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_ButtonLight, lv_color_hex(0x404040), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_ButtonLight, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_lightLabel = lv_label_create(ui_ButtonLight);
     lv_obj_set_width(ui_lightLabel, LV_SIZE_CONTENT);   /// 1
@@ -144,14 +146,14 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_x(ui_lightLabel, 1);
     lv_obj_set_y(ui_lightLabel, -2);
     lv_obj_set_align(ui_lightLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_lightLabel, "Cuisine");
+    lv_label_set_text(ui_lightLabel, "Bureau JP");
     lv_obj_set_style_text_font(ui_lightLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_ButtonSelectLight = lv_btn_create(ui_Screen1);
     lv_obj_set_width(ui_ButtonSelectLight, 63);
     lv_obj_set_height(ui_ButtonSelectLight, 28);
-    lv_obj_set_x(ui_ButtonSelectLight, 91);
-    lv_obj_set_y(ui_ButtonSelectLight, 136);
+    lv_obj_set_x(ui_ButtonSelectLight, 77);
+    lv_obj_set_y(ui_ButtonSelectLight, 138);
     lv_obj_set_align(ui_ButtonSelectLight, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_ButtonSelectLight, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_ButtonSelectLight, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -161,8 +163,8 @@ void ui_Screen1_screen_init(void)
     ui_selectButtonLabel = lv_label_create(ui_ButtonSelectLight);
     lv_obj_set_width(ui_selectButtonLabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_selectButtonLabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_selectButtonLabel, 1);
-    lv_obj_set_y(ui_selectButtonLabel, -1);
+    lv_obj_set_x(ui_selectButtonLabel, -1);
+    lv_obj_set_y(ui_selectButtonLabel, 0);
     lv_obj_set_align(ui_selectButtonLabel, LV_ALIGN_CENTER);
     lv_label_set_text(ui_selectButtonLabel, "Select");
     lv_obj_set_style_text_font(ui_selectButtonLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);

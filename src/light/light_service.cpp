@@ -12,7 +12,7 @@ static const char PAYLOAD_SAL[] = "salon";
 static const char PAYLOAD_STA[] = "statue";
 static const char PAYLOAD_GAL[] = "galerie";
 static const char PAYLOAD_PIS[] = "piscine";
-static const char PAYLOAD_BJP[] = "bureaujp";
+static const char PAYLOAD_BJP[] = "bureaujp";  // 4 lights all following this pattern in Node-RED
 
 // Status payloads (received from Node-RED)
 static const char CUISINE_ON[]  = "cu_on";
