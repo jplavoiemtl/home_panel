@@ -107,9 +107,19 @@ home_panel/
 │   ├── image/
 │   │   ├── image_fetcher.h     # HTTP image fetcher API
 │   │   └── image_fetcher.cpp   # HTTP image fetcher implementation
-│   └── screen_memory/          # (Optional)
-│       ├── screen_memory.h     # Screen persistence API
-│       └── screen_memory.cpp   # Screen persistence implementation
+│   ├── temperature/
+│   │   ├── temperature_service.h   # Cycling temperature display API
+│   │   └── temperature_service.cpp # Cycling temperature display implementation
+│   ├── light/
+│   │   ├── light_service.h     # Light control API
+│   │   └── light_service.cpp   # Light control implementation
+│   ├── time/
+│   │   ├── time_service.h      # NTP time display API
+│   │   └── time_service.cpp    # NTP time display implementation
+│   ├── screen/
+│   │   ├── screen_power.h      # Screen power management API
+│   │   └── screen_power.cpp    # Screen auto-dim implementation
+│   └── ui_custom.h             # Custom UI extensions
 ├── ui/                         # SquareLine Studio generated (gitignored)
 │   ├── ui.h
 │   ├── ui.c
@@ -136,13 +146,13 @@ home_panel/
         ┌──────────────────┼──────────────────┐
         │                  │                  │
         ▼                  ▼                  ▼
-┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│  net_module   │  │ image_fetcher │  │screen_memory │
-│               │  │               │  │  (optional)   │
-│ - WiFi mgmt   │  │ - HTTP GET    │  │ - NVS persist │
-│ - MQTT client │  │ - JPEG decode │  │ - Screen track│
-│ - Reconnect   │  │ - Display     │  │               │
-└───────┬───────┘  └───────┬───────┘  └───────────────┘
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ net_module   │ │image_fetcher │ │ temp_service │ │light_service │
+│              │ │              │ │              │ │              │
+│- WiFi mgmt  │ │- HTTP GET    │ │- Cycling loc │ │- Cycling sel │
+│- MQTT client│ │- JPEG decode │ │- MQTT status │ │- MQTT toggle │
+│- Reconnect  │ │- Display     │ │- NVS persist │ │- NVS persist │
+└──────┬───────┘ └──────┬───────┘ └──────────────┘ └──────────────┘
         │                  │
         │                  │
         ▼                  ▼
@@ -261,7 +271,54 @@ struct ImageFetcherConfig {
 };
 ```
 
-### 4.4 Screen Memory Module (`src/screen_memory/`) - Optional
+### 4.4 Light Service Module (`src/light/`)
+
+**Responsibilities:**
+
+- Cycle through available lights (select button)
+- Toggle the currently selected light via MQTT publish
+- Receive light status updates via MQTT (ON/OFF)
+- Display light name, button color, and ON/OFF images
+- Persist selected light index to NVS (30-second debounce)
+
+**API:**
+
+```cpp
+void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
+                        lv_obj_t* label, lv_obj_t* imgOn, lv_obj_t* imgOff,
+                        PubSubClient* mqtt);
+void light_service_handleMQTT(const char* payload);
+void light_service_cycleLight();
+void light_service_toggleCurrent();
+void light_service_loop();
+```
+
+**Data Model:**
+
+```cpp
+struct LightMeta {
+    const char* description;       // Display name ("Cuisine")
+    const char* togglePayload;     // Published to toggle ("cuisine")
+    const char* statusOnPayload;   // Received when ON ("cu_on")
+    const char* statusOffPayload;  // Received when OFF ("cu_of")
+};
+```
+
+**MQTT:**
+
+- Topic: `m18toggle` (shared for commands and status)
+- Publishes toggle payload on button press
+- Receives status payloads and updates `LightState` (UNKNOWN, ON, OFF)
+
+**UI Feedback:**
+
+| State   | Button color | ON image | OFF image |
+|---------|-------------|----------|-----------|
+| ON      | Yellow      | Visible  | Hidden    |
+| OFF     | Dark grey   | Hidden   | Visible   |
+| UNKNOWN | Purple      | Hidden   | Hidden    |
+
+### 4.5 Screen Memory Module (`src/screen_memory/`) - Optional
 
 **Responsibilities:**
 
@@ -331,7 +388,34 @@ LVGL Image Widget
 Screen 2 Display
 ```
 
-### 5.3 MQTT-Triggered Image Flow
+### 5.3 Light Control Flow
+
+```
+User Touch (Select Button)          User Touch (Toggle Button)
+    │                                   │
+    │ buttonSelectLight_event_handler   │ buttonLight_event_handler
+    ▼                                   ▼
+light_service_cycleLight()          light_service_toggleCurrent()
+    │                                   │
+    │ Update label + button color       │ mqtt->publish("m18toggle", payload)
+    │ Start NVS debounce timer          ▼
+    ▼                               MQTT Broker
+Display Update                          │
+                                        │ Node-RED processes toggle
+                                        ▼
+                                    MQTT Broker
+                                        │
+                                        │ publish: "m18toggle" (status payload)
+                                        ▼
+                                    light_service_handleMQTT()
+                                        │
+                                        │ Update lightStates[], button color,
+                                        │ show/hide ON/OFF images
+                                        ▼
+                                    Display Update
+```
+
+### 5.4 MQTT-Triggered Image Flow
 
 ```
 MQTT Broker
@@ -367,6 +451,13 @@ ui_Screen1
 │   ├── ui_btnLatest (Request latest image)
 │   ├── ui_btnNew (Request new capture)
 │   └── ui_btnBack (Return from image view)
+├── Light Control Section
+│   ├── ui_ButtonSelectLight (Cycle through lights)
+│   ├── ui_selectButtonLabel (Select button text)
+│   ├── ui_ButtonLight (Toggle selected light)
+│   ├── ui_lightLabel (Selected light name)
+│   ├── ui_lightONImage (Light bulb ON image)
+│   └── ui_lightOFFImage (Light bulb OFF image)
 ├── Status Section
 │   ├── ui_labelConnectionStatus (WiFi/MQTT status)
 │   └── ui_ActivitySpinner (Loading indicator)
