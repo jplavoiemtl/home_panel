@@ -44,6 +44,8 @@ extern lv_obj_t * ui_ButtonTempLoc;
 extern lv_obj_t * ui_tempLocLabel;
 extern lv_obj_t * ui_tempTimeLabel;
 extern lv_obj_t * ui_labelOutsideTemp;
+extern lv_obj_t * ui_lightOFFImage;
+extern lv_obj_t * ui_lightONImage;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

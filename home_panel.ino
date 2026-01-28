@@ -503,7 +503,8 @@ void setup() {
     temperature_service_init(ui_tempLocLabel, ui_labelOutsideTemp, ui_tempTimeLabel);
 
     // Initialize light service (cycling light control)
-    light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel, &mqttClient);
+    light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel,
+                       ui_lightONImage, ui_lightOFFImage, &mqttClient);
 
     Serial.println("=== Setup Complete ===\n");
 }

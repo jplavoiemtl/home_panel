@@ -22,9 +22,12 @@
 // - selectBtn: button to cycle through lights (ButtonSelectLight)
 // - lightBtn: button to toggle current light (ButtonLight)
 // - label: displays the selected light name (lightLabel)
+// - imgOn: image shown when light is ON (lightONImage)
+// - imgOff: image shown when light is OFF (lightOFFImage)
 // - mqtt: PubSubClient pointer for publishing toggle commands
 void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
-                        lv_obj_t* label, PubSubClient* mqtt);
+                        lv_obj_t* label, lv_obj_t* imgOn, lv_obj_t* imgOff,
+                        PubSubClient* mqtt);
 
 // Handle incoming MQTT message on the light topic
 // Matches payload against known status strings (e.g., "cu_on", "sa_of")

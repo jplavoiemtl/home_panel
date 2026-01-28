@@ -44,6 +44,8 @@ LV_IMG_DECLARE(ui_img_button_latst_png);    // assets/button_latst.png
 LV_IMG_DECLARE(ui_img_button_back_png);    // assets/button_back.png
 LV_IMG_DECLARE(ui_img_button_new_png);    // assets/button_new.png
 LV_IMG_DECLARE(ui_img_thermometer3_png);    // assets/thermometer3.png
+LV_IMG_DECLARE(ui_img_light_bulb_off_png);    // assets/light_bulb_off.png
+LV_IMG_DECLARE(ui_img_light_bulb_on_png);    // assets/light_bulb_on.png
 
 // FONTS
 LV_FONT_DECLARE(ui_font_dsdigib100);

@@ -82,6 +82,8 @@ size_t currentLight = 0;
 lv_obj_t* btnSelect = nullptr;
 lv_obj_t* btnLight = nullptr;
 lv_obj_t* labelLight = nullptr;
+lv_obj_t* imgOn = nullptr;
+lv_obj_t* imgOff = nullptr;
 
 // MQTT client pointer (for publishing)
 PubSubClient* mqtt = nullptr;
@@ -143,6 +145,23 @@ void updateUI() {
     if (btnLight) {
         lv_obj_set_style_bg_color(btnLight, getLightColor(state), LV_PART_MAIN);
     }
+
+    // Update ON/OFF images based on light state
+    switch (state) {
+        case LightState::ON:
+            if (imgOn) lv_obj_clear_flag(imgOn, LV_OBJ_FLAG_HIDDEN);
+            if (imgOff) lv_obj_add_flag(imgOff, LV_OBJ_FLAG_HIDDEN);
+            break;
+        case LightState::OFF:
+            if (imgOn) lv_obj_add_flag(imgOn, LV_OBJ_FLAG_HIDDEN);
+            if (imgOff) lv_obj_clear_flag(imgOff, LV_OBJ_FLAG_HIDDEN);
+            break;
+        case LightState::UNKNOWN:
+        default:
+            if (imgOn) lv_obj_add_flag(imgOn, LV_OBJ_FLAG_HIDDEN);
+            if (imgOff) lv_obj_add_flag(imgOff, LV_OBJ_FLAG_HIDDEN);
+            break;
+    }
 }
 
 }  // namespace
@@ -152,10 +171,13 @@ void updateUI() {
 // ============================================================================
 
 void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
-                        lv_obj_t* label, PubSubClient* mqttClient) {
+                        lv_obj_t* label, lv_obj_t* imageOn, lv_obj_t* imageOff,
+                        PubSubClient* mqttClient) {
     btnSelect = selectBtn;
     btnLight = lightBtn;
     labelLight = label;
+    imgOn = imageOn;
+    imgOff = imageOff;
     mqtt = mqttClient;
 
     // Initialize all light states to UNKNOWN
