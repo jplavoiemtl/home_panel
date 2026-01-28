@@ -80,7 +80,8 @@ This pointer is passed at init time.
 
 ```cpp
 void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
-                        lv_obj_t* label, PubSubClient* mqtt);
+                        lv_obj_t* label, lv_obj_t* imgOn, lv_obj_t* imgOff,
+                        PubSubClient* mqtt);
 ```
 
 When the user presses `ButtonLight`:
@@ -121,7 +122,7 @@ else if (strcmp(topic, TOPIC_LIGHT) == 0) {
 
 ## UI Elements (SquareLine Studio)
 
-All three UI elements are already defined in SLS and must not be modified.
+All UI elements are already defined in SLS and must not be modified.
 
 ### ButtonSelectLight (`ui_ButtonSelectLight`)
 
@@ -140,6 +141,24 @@ All three UI elements are already defined in SLS and must not be modified.
 ### lightLabel (`ui_lightLabel`)
 
 - Shows the `description` field of the currently selected light
+
+### lightONImage (`ui_lightONImage`)
+
+- Light bulb image shown when the selected light is ON
+- Hidden when OFF or UNKNOWN
+
+### lightOFFImage (`ui_lightOFFImage`)
+
+- Light bulb image shown when the selected light is OFF
+- Hidden when ON or UNKNOWN
+
+### Image Visibility Logic
+
+| State   | ButtonLight color | lightONImage | lightOFFImage |
+|---------|-------------------|--------------|---------------|
+| ON      | Yellow            | Visible      | Hidden        |
+| OFF     | Dark grey         | Hidden       | Visible       |
+| UNKNOWN | Purple            | Hidden       | Hidden        |
 
 ---
 
@@ -209,7 +228,8 @@ void buttonLight_event_handler(lv_event_t* e) {
 #include <PubSubClient.h>
 
 void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
-                        lv_obj_t* label, PubSubClient* mqtt);
+                        lv_obj_t* label, lv_obj_t* imgOn, lv_obj_t* imgOff,
+                        PubSubClient* mqtt);
 void light_service_handleMQTT(const char* payload);
 void light_service_cycleLight();
 void light_service_toggleCurrent();
@@ -243,7 +263,7 @@ void buttonLight_event_handler(lv_event_t* e);
 - Define `#define TOPIC_LIGHT "m18toggle"`
 - Pass `TOPIC_LIGHT` in `NetConfig.topics.light`
 - Add `else if` branch in `mqttCallback()` routing to `light_service_handleMQTT()`
-- Call `light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel, &mqttClient)` in `setup()`
+- Call `light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel, ui_lightONImage, ui_lightOFFImage, &mqttClient)` in `setup()`
 - Call `light_service_loop()` in the main `loop()`
 
 ---
@@ -260,7 +280,7 @@ If MQTT is disconnected, toggle presses will silently fail (`PubSubClient::publi
 
 ### Rapid toggling
 
-The 300 ms debounce prevents accidental double-toggles. Node-RED is responsible for handling toggle semantics, so even if two toggles arrive in sequence, the result is deterministic from Node-RED's perspective.
+The 500 ms debounce prevents accidental double-toggles. Node-RED is responsible for handling toggle semantics, so even if two toggles arrive in sequence, the result is deterministic from Node-RED's perspective.
 
 ### Status for non-selected light
 
