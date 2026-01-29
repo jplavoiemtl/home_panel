@@ -13,6 +13,7 @@ static const char PAYLOAD_STA[] = "statue";
 static const char PAYLOAD_GAL[] = "galerie";
 static const char PAYLOAD_PIS[] = "piscine";
 static const char PAYLOAD_BJP[] = "bureaujp";  // 4 lights all following this pattern in Node-RED
+static const char PAYLOAD_CJP[] = "chambrejp";
 
 // Status payloads (received from Node-RED)
 static const char CUISINE_ON[]  = "cu_on";
@@ -27,6 +28,8 @@ static const char PISCINE_ON[]  = "pi_on";
 static const char PISCINE_OFF[] = "pi_of";
 static const char BURJP_ON[]  = "bj_on";
 static const char BURJP_OFF[] = "bj_of";
+static const char CHAMBREJP_ON[]  = "cj_on";
+static const char CHAMBREJP_OFF[] = "cj_of";
 
 // MQTT topic for light commands and status
 static const char TOPIC_LIGHT[] = "m18toggle";
@@ -56,7 +59,8 @@ static const LightMeta lightMeta[] = {
     { "Statue",   PAYLOAD_STA, STATUE_ON,   STATUE_OFF   },
     { "Galerie",  PAYLOAD_GAL, GALERIE_ON,  GALERIE_OFF  },
     { "Piscine",  PAYLOAD_PIS, PISCINE_ON,  PISCINE_OFF  },
-    { "Bureau JP",PAYLOAD_BJP, BURJP_ON,    BURJP_OFF    },    
+    { "Bureau JP",PAYLOAD_BJP, BURJP_ON,    BURJP_OFF    },   
+    { "Chambre JP",PAYLOAD_CJP, CHAMBREJP_ON, CHAMBREJP_OFF  }, 
 };
 
 static constexpr size_t LIGHT_COUNT = sizeof(lightMeta) / sizeof(lightMeta[0]);

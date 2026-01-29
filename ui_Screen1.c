@@ -250,9 +250,9 @@ void ui_Screen1_screen_init(void)
 
     ui_electricContainer = lv_obj_create(ui_Screen1);
     lv_obj_remove_style_all(ui_electricContainer);
-    lv_obj_set_width(ui_electricContainer, 354);
+    lv_obj_set_width(ui_electricContainer, 420);
     lv_obj_set_height(ui_electricContainer, 129);
-    lv_obj_set_x(ui_electricContainer, -112);
+    lv_obj_set_x(ui_electricContainer, -102);
     lv_obj_set_y(ui_electricContainer, 47);
     lv_obj_set_align(ui_electricContainer, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_electricContainer, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -271,7 +271,7 @@ void ui_Screen1_screen_init(void)
     ui_labelPowerValue = lv_label_create(ui_electricContainer);
     lv_obj_set_width(ui_labelPowerValue, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelPowerValue, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelPowerValue, 154);
+    lv_obj_set_x(ui_labelPowerValue, 187);
     lv_obj_set_y(ui_labelPowerValue, -48);
     lv_obj_set_align(ui_labelPowerValue, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelPowerValue, "--");
@@ -293,7 +293,7 @@ void ui_Screen1_screen_init(void)
     ui_labelEnergyValue = lv_label_create(ui_electricContainer);
     lv_obj_set_width(ui_labelEnergyValue, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_labelEnergyValue, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_labelEnergyValue, 154);
+    lv_obj_set_x(ui_labelEnergyValue, 188);
     lv_obj_set_y(ui_labelEnergyValue, -7);
     lv_obj_set_align(ui_labelEnergyValue, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_labelEnergyValue, "--");
@@ -397,10 +397,10 @@ void ui_Screen1_screen_init(void)
     ui_Label1 = lv_label_create(ui_Screen1);
     lv_obj_set_width(ui_Label1, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Label1, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Label1, 157);
-    lv_obj_set_y(ui_Label1, -20);
+    lv_obj_set_x(ui_Label1, 179);
+    lv_obj_set_y(ui_Label1, -16);
     lv_obj_set_align(ui_Label1, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_Label1, "Residence Lavoie");
+    lv_label_set_text(ui_Label1, "Residence \nLavoie");
     lv_obj_set_style_text_font(ui_Label1, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_ButtonLight, ui_event_ButtonLight, LV_EVENT_ALL, NULL);
