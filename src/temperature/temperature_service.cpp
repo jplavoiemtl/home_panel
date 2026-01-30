@@ -16,7 +16,10 @@ struct LocationMeta {
 
 const LocationMeta locationMeta[] = {
     { "Outside", "OutsideTemp" },
-    { "Salon", "AmbientTemp" }
+    { "Salon", "AmbientTemp" }, 
+    { "Bureau JP", "BurjpTemp" },
+    { "Maitre", "MaitreTemp" },
+    { "Myriam", "MyriamTemp" }
 };
 
 constexpr size_t TEMP_LOC_COUNT = sizeof(locationMeta) / sizeof(locationMeta[0]);

@@ -129,7 +129,7 @@ void saveLightToNVS(size_t idx) {
 
 lv_color_t getLightColor(LightState state) {
     switch (state) {
-        case LightState::ON:      return lv_color_hex(0x868601);  // Yellow  
+        case LightState::ON:      return lv_color_hex(0xc6b033);  // Yellow
         case LightState::OFF:     return lv_color_hex(0x2D2D2D);  // Dark Grey
         case LightState::UNKNOWN:
         default:                  return lv_color_hex(0x800080);  // Purple
