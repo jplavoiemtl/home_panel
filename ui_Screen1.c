@@ -133,7 +133,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_text_font(ui_labelConnectionStatus, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_ButtonLight = lv_btn_create(ui_Screen1);
-    lv_obj_set_width(ui_ButtonLight, 116);
+    lv_obj_set_width(ui_ButtonLight, 122);
     lv_obj_set_height(ui_ButtonLight, 74);
     lv_obj_set_x(ui_ButtonLight, 175);
     lv_obj_set_y(ui_ButtonLight, 118);
@@ -173,13 +173,13 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_text_font(ui_selectButtonLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_cameraPanel = lv_obj_create(ui_Screen1);
-    lv_obj_set_width(ui_cameraPanel, 296);
-    lv_obj_set_height(ui_cameraPanel, 96);
-    lv_obj_set_x(ui_cameraPanel, -136);
-    lv_obj_set_y(ui_cameraPanel, 115);
+    lv_obj_set_width(ui_cameraPanel, 250);
+    lv_obj_set_height(ui_cameraPanel, 94);
+    lv_obj_set_x(ui_cameraPanel, -113);
+    lv_obj_set_y(ui_cameraPanel, 112);
     lv_obj_set_align(ui_cameraPanel, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_cameraPanel, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_obj_set_style_bg_color(ui_cameraPanel, lv_color_hex(0x0A0854), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_cameraPanel, lv_color_hex(0x0D1E74), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_cameraPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_cameraPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(ui_cameraPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -187,8 +187,8 @@ void ui_Screen1_screen_init(void)
     ui_ButtonLatest = lv_btn_create(ui_cameraPanel);
     lv_obj_set_width(ui_ButtonLatest, 128);
     lv_obj_set_height(ui_ButtonLatest, 143);
-    lv_obj_set_x(ui_ButtonLatest, 48);
-    lv_obj_set_y(ui_ButtonLatest, 29);
+    lv_obj_set_x(ui_ButtonLatest, 26);
+    lv_obj_set_y(ui_ButtonLatest, 31);
     lv_obj_set_align(ui_ButtonLatest, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_ButtonLatest, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_ButtonLatest, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -201,8 +201,8 @@ void ui_Screen1_screen_init(void)
     ui_ButtonBack = lv_btn_create(ui_cameraPanel);
     lv_obj_set_width(ui_ButtonBack, 138);
     lv_obj_set_height(ui_ButtonBack, 143);
-    lv_obj_set_x(ui_ButtonBack, -33);
-    lv_obj_set_y(ui_ButtonBack, 28);
+    lv_obj_set_x(ui_ButtonBack, -53);
+    lv_obj_set_y(ui_ButtonBack, 30);
     lv_obj_set_align(ui_ButtonBack, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_ButtonBack, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_ButtonBack, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -215,8 +215,8 @@ void ui_Screen1_screen_init(void)
     ui_ButtonNew = lv_btn_create(ui_cameraPanel);
     lv_obj_set_width(ui_ButtonNew, 128);
     lv_obj_set_height(ui_ButtonNew, 143);
-    lv_obj_set_x(ui_ButtonNew, 130);
-    lv_obj_set_y(ui_ButtonNew, 28);
+    lv_obj_set_x(ui_ButtonNew, 107);
+    lv_obj_set_y(ui_ButtonNew, 31);
     lv_obj_set_align(ui_ButtonNew, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_ButtonNew, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_ButtonNew, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
