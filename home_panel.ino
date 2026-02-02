@@ -500,7 +500,7 @@ void setup() {
     time_service_init();
 
     // Initialize temperature service (cycling display)
-    temperature_service_init(ui_tempLocLabel, ui_labelOutsideTemp, ui_tempTimeLabel);
+    temperature_service_init(ui_tempLocLabel, ui_labelOutsideTemp, ui_tempTimeLabel, &mqttClient);
 
     // Initialize light service (cycling light control)
     light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel,
@@ -529,11 +529,12 @@ void loop() {
         netCheckMqtt();
     }
 
-    // Detect MQTT reconnection and request fresh light status
+    // Detect MQTT reconnection and request fresh status from services
     static bool wasMqttConnected = false;
     bool isMqttConnected = mqttClient.connected();
     if (isMqttConnected && !wasMqttConnected) {
         light_service_requestStatus();
+        temperature_service_requestStatus();
     }
     wasMqttConnected = isMqttConnected;
 

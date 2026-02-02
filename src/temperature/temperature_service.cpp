@@ -3,6 +3,10 @@
 #include <Preferences.h>
 #include "../time/time_service.h"
 
+// MQTT constants
+static const char TOPIC_WEATHER[] = "weather";
+static const char PAYLOAD_STATUS[] = "status";
+
 // ============================================================================
 // Location Configuration - Single Source of Truth
 // ============================================================================
@@ -55,6 +59,9 @@ size_t currentLocation = 0;
 lv_obj_t* labelLoc = nullptr;
 lv_obj_t* labelTemp = nullptr;
 lv_obj_t* labelTime = nullptr;
+
+// MQTT client pointer (for publishing status requests)
+PubSubClient* mqtt = nullptr;
 
 // NVS debounce state
 unsigned long lastLocationChangeTime = 0;
@@ -140,11 +147,13 @@ void updateUI() {
 // Public API
 // ============================================================================
 
-void temperature_service_init(lv_obj_t* locLabel, lv_obj_t* tempLabel, lv_obj_t* timeLabel) {
-    // Store label pointers
+void temperature_service_init(lv_obj_t* locLabel, lv_obj_t* tempLabel,
+                              lv_obj_t* timeLabel, PubSubClient* mqttClient) {
+    // Store label and MQTT pointers
     labelLoc = locLabel;
     labelTemp = tempLabel;
     labelTime = timeLabel;
+    mqtt = mqttClient;
 
     // Initialize all samples as invalid
     for (size_t i = 0; i < TEMP_LOC_COUNT; i++) {
@@ -159,7 +168,17 @@ void temperature_service_init(lv_obj_t* locLabel, lv_obj_t* tempLabel, lv_obj_t*
     // Display initial state
     updateUI();
 
+    // Request current temperature status from Node-RED
+    temperature_service_requestStatus();
+
     Serial.println("Temperature service initialized");
+}
+
+void temperature_service_requestStatus() {
+    if (mqtt && mqtt->connected()) {
+        mqtt->publish(TOPIC_WEATHER, PAYLOAD_STATUS);
+        Serial.println("Temperature service: requested status from Node-RED");
+    }
 }
 
 void temperature_service_handleMQTT(const char* payload) {
