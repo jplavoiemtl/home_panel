@@ -391,8 +391,8 @@ static void processHTTPResponse() {
       size_t bytesRead = stream->readBytes(jpeg_buffer_psram + jpeg_bytes_received, bytesToRead);
       jpeg_bytes_received += bytesRead;
 
-      // Yield to LVGL but DON'T call lv_timer_handler here - it can cause reentrancy issues
-      delay(1);
+      // Yield to RTOS scheduler to prevent watchdog resets during long downloads
+      yield();
     }
 
     if (jpeg_bytes_received >= jpeg_buffer_size) {
