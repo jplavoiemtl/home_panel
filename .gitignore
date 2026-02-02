@@ -15,6 +15,9 @@ companion_reference_code/
 power_display_reference_code/
 ntp_reference_code/
 
+# Node-RED flows (reference only, lives in separate repo)
+node-red/
+
 # Build output & squareline files
 build/
 squareline/
