@@ -13,6 +13,7 @@ static const char PAYLOAD_STA[] = "statue";
 static const char PAYLOAD_GAL[] = "galerie";
 static const char PAYLOAD_PIS[] = "piscine";
 static const char PAYLOAD_BJP[] = "bureaujp";  // 4 lights all following this pattern in Node-RED
+static const char PAYLOAD_STATUS[] = "status";
 static const char PAYLOAD_CJP[] = "chambrejp";
 
 // Status payloads (received from Node-RED)
@@ -195,7 +196,17 @@ void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
     // Display initial state
     updateUI();
 
+    // Request current light status from Node-RED
+    light_service_requestStatus();
+
     Serial.println("Light service initialized");
+}
+
+void light_service_requestStatus() {
+    if (mqtt && mqtt->connected()) {
+        mqtt->publish(TOPIC_LIGHT, PAYLOAD_STATUS);
+        Serial.println("Light service: requested status from Node-RED");
+    }
 }
 
 void light_service_handleMQTT(const char* payload) {

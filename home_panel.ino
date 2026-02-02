@@ -529,6 +529,14 @@ void loop() {
         netCheckMqtt();
     }
 
+    // Detect MQTT reconnection and request fresh light status
+    static bool wasMqttConnected = false;
+    bool isMqttConnected = mqttClient.connected();
+    if (isMqttConnected && !wasMqttConnected) {
+        light_service_requestStatus();
+    }
+    wasMqttConnected = isMqttConnected;
+
     // Process OTA web server
     server.handleClient();
     ElegantOTA.loop();

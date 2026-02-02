@@ -39,6 +39,10 @@ void light_service_cycleLight();
 // Toggle the currently selected light (publish MQTT command)
 void light_service_toggleCurrent();
 
+// Request current light status from Node-RED via MQTT
+// Called at init and after MQTT reconnection
+void light_service_requestStatus();
+
 // Periodic processing - handles NVS debounce save (call in loop())
 void light_service_loop();
 
