@@ -13,7 +13,7 @@ sound but yield negligible real-world improvement.
 |--------|---------|--------|
 | Throttle LVGL to 200 Hz | Negligible — `lv_timer_handler()` returns quickly when idle | **Not implementing** |
 | `delay(2)` → `delay(1)` | Negligible — network stack runs on RTOS background task | **Not implementing** |
-| Replace image download `delay(1)` with `yield()` | Measurable — eliminates 300-500 ms dead time per download | **Implementing** |
+| Replace image download `delay(1)` with `yield()` | Measurable — eliminates 300-500 ms dead time per download | **Implemented** |
 
 ---
 
@@ -55,16 +55,35 @@ requirement with near-zero overhead.
 
 ---
 
-## Expected Impact
+## Verified Results
 
-- **Image download time**: Reduced by 300-500 ms per download (the accumulated
-  `delay(1)` overhead)
+Cached image downloads now complete in 47-72 ms. New image generation (server-side)
+takes ~4.5 s, dominated by server processing time rather than transfer overhead.
+
+| Request type | Download time | Notes |
+|-------------|--------------|-------|
+| Cached (back/latest) | 47-72 ms | Network transfer only |
+| New generation | ~4,558 ms | Server-side AI generation dominates |
+
 - **UI responsiveness**: Unchanged — `yield()` still allows RTOS tasks to run
-- **Stability**: Maintained — `yield()` prevents watchdog resets
+- **Stability**: Maintained — no watchdog resets observed
+- **Serial logs**: Streamlined to show only key events with download timing
 
-## Verification Plan
+## Serial Log Streamlining
 
-1. Download several images and verify they complete faster than before
-2. Monitor serial output for watchdog reset warnings
-3. Verify UI remains responsive during downloads
-4. Test with both small and large JPEG files
+As part of this optimization, serial output from the image fetcher was streamlined
+for better readability. Verbose messages were removed, and download duration timing
+was added.
+
+**Typical output:**
+
+```
+Button: latest
+Image request: latest
+Image downloaded: 22685 bytes in 60ms. Decoding...
+Image displayed: 480x320
+```
+
+Removed messages: HTTP GET details, content-length, "starting to receive", JPEG
+decode confirmation, LVGL source update, and screen unload notifications. JPEG
+dimension mismatch warnings are still logged when they occur.

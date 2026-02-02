@@ -270,11 +270,12 @@ void temperature_service_loop();
 
 **Responsibilities:**
 
-- HTTP/HTTPS image retrieval
+- HTTP/HTTPS image retrieval (optimized with `yield()` instead of `delay(1)`)
 - JPEG decoding to RGB565
 - LVGL image widget update
 - Request queueing and timeout handling
 - Memory management for image buffers
+- Streamlined serial logging with download duration timing
 
 **API:**
 

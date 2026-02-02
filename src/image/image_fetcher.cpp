@@ -268,7 +268,7 @@ static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* b
 
 //***************************************************************************************************
 static bool requestImage(const char* endpoint_type) {
-  USBSerial.printf("=== requestImage('%s') START ===\n", endpoint_type);
+  USBSerial.printf("Image request: %s\n", endpoint_type);
 
   if (WiFi.status() != WL_CONNECTED) {
     USBSerial.println("WiFi not connected, cannot make HTTP request.");
@@ -305,7 +305,6 @@ static bool requestImage(const char* endpoint_type) {
 
   httpState = HTTP_REQUESTING;
   httpRequestStartTime = millis();
-  USBSerial.println("Sending HTTP GET...");
 
   int httpCode = httpClient.GET();
 
@@ -317,8 +316,6 @@ static bool requestImage(const char* endpoint_type) {
   }
 
   int contentLength = httpClient.getSize();
-  USBSerial.print("Response received, Content-Length: ");
-  USBSerial.println(contentLength);
 
   if (contentLength <= 0 || contentLength > static_cast<int>(MAX_JPEG_SIZE)) {
     USBSerial.println("Invalid or too large content length");
@@ -338,8 +335,6 @@ static bool requestImage(const char* endpoint_type) {
   jpeg_buffer_size = contentLength;
   jpeg_bytes_received = 0;
   httpState = HTTP_RECEIVING;
-
-  USBSerial.println("Starting to receive image data...");
   return true;
 }
 
@@ -396,7 +391,9 @@ static void processHTTPResponse() {
     }
 
     if (jpeg_bytes_received >= jpeg_buffer_size) {
-      USBSerial.println("Image download complete. Starting decode...");
+      unsigned long downloadTime = millis() - httpRequestStartTime;
+      USBSerial.printf("Image downloaded: %d bytes in %lums. Decoding...\n",
+                       jpeg_bytes_received, downloadTime);
       httpClient.end();
       httpState = HTTP_DECODING;
     }
@@ -437,8 +434,11 @@ static void processHTTPResponse() {
     // Get JPEG dimensions for debugging
     uint16_t jpgWidth = 0, jpgHeight = 0;
     TJpgDec.getJpgSize(&jpgWidth, &jpgHeight, jpeg_buffer_psram, jpeg_buffer_size);
-    USBSerial.printf("JPEG dimensions: %dx%d, Screen: %dx%d\n",
-                     jpgWidth, jpgHeight, cfg.screenWidth, cfg.screenHeight);
+    // Log only if dimensions don't match screen (unexpected)
+    if (jpgWidth != cfg.screenWidth || jpgHeight != cfg.screenHeight) {
+      USBSerial.printf("JPEG dimensions mismatch: %dx%d, Screen: %dx%d\n",
+                       jpgWidth, jpgHeight, cfg.screenWidth, cfg.screenHeight);
+    }
 
     uint8_t result = TJpgDec.drawJpg(0, 0, jpeg_buffer_psram, jpeg_buffer_size);
 
@@ -452,7 +452,7 @@ static void processHTTPResponse() {
       return;
     }
 
-    USBSerial.println("JPEG decoded successfully into PSRAM.");
+    // JPEG decoded successfully
 
     // NOTE: Display rotation stays at 90 degrees throughout (set in setup).
     // The raw image buffer (480x320) displays correctly with LVGL's 90° rotation.
@@ -470,7 +470,7 @@ static void processHTTPResponse() {
       lv_img_set_src(cfg.imgScreen2Background, &img_dsc);
       lv_obj_set_style_opa(cfg.imgScreen2Background, LV_OPA_COVER, LV_PART_MAIN);
     }
-    USBSerial.println("LVGL image source updated.");
+    USBSerial.printf("Image displayed: %dx%d\n", cfg.screenWidth, cfg.screenHeight);
 
     // Enable back button now that image is displayed
     ui_Screen2_setImageDisplayed(true);
@@ -522,7 +522,6 @@ bool requestLatestImage() {
   // Wake screen for incoming image (handles MQTT-triggered requests)
   screenPowerActivity();
 
-  USBSerial.println("Initiating async latest image request...");
   prepareForRequest();
   pendingEndpoint = "latest";
   return true;
@@ -531,7 +530,7 @@ bool requestLatestImage() {
 //***************************************************************************************************
 void buttonLatest_event_handler(lv_event_t* e) {
   if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
-    USBSerial.println("Latest button clicked");
+    USBSerial.println("Button: latest");
     requestLatestImage();
   }
 }
@@ -543,7 +542,7 @@ void buttonNew_event_handler(lv_event_t* e) {
       USBSerial.println("New button clicked but WiFi not available (recovering)");
       return;
     }
-    USBSerial.println("New button clicked, initiating async request...");
+    USBSerial.println("Button: new");
     prepareForRequest();
     pendingEndpoint = "new";
   }
@@ -556,7 +555,7 @@ void buttonBack_event_handler(lv_event_t* e) {
       USBSerial.println("Back button clicked but WiFi not available (recovering)");
       return;
     }
-    USBSerial.println("Back button clicked, initiating async request...");
+    USBSerial.println("Button: back");
     prepareForRequest();
     pendingEndpoint = "back";
   }
@@ -588,7 +587,7 @@ void screen2_event_handler(lv_event_t* e) {
       imageDisplayTimeoutActive = false;
     }
   } else if (code == LV_EVENT_SCREEN_UNLOAD_START) {
-    USBSerial.println("Screen 2 Unloading: Stopping HTTP and freeing buffers.");
+    // Screen 2 unloading — stop HTTP and free buffers
 
     // Set cleanup flag FIRST to stop any buffer access
     cleanupInProgress = true;
