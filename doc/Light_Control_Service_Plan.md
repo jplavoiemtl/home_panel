@@ -233,6 +233,7 @@ void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
 void light_service_handleMQTT(const char* payload);
 void light_service_cycleLight();
 void light_service_toggleCurrent();
+void light_service_requestStatus();
 void light_service_loop();
 
 #ifdef __cplusplus
@@ -265,6 +266,7 @@ void buttonLight_event_handler(lv_event_t* e);
 - Add `else if` branch in `mqttCallback()` routing to `light_service_handleMQTT()`
 - Call `light_service_init(ui_ButtonSelectLight, ui_ButtonLight, ui_lightLabel, ui_lightONImage, ui_lightOFFImage, &mqttClient)` in `setup()`
 - Call `light_service_loop()` in the main `loop()`
+- Add MQTT reconnection detection in `loop()` that calls `light_service_requestStatus()` on connect transitions
 
 ---
 
@@ -272,11 +274,11 @@ void buttonLight_event_handler(lv_event_t* e);
 
 ### Boot state
 
-All lights start as `UNKNOWN` (purple button). The UI correctly reflects that no status has been received yet. Status will update naturally as Node-RED publishes state.
+All lights start as `UNKNOWN` (purple). At init and on every MQTT connect/reconnect, the service publishes a `"status"` request to `m18toggle`. Node-RED responds with the current ON/OFF state for each light, so the panel shows accurate states within seconds of booting.
 
 ### MQTT disconnection
 
-If MQTT is disconnected, toggle presses will silently fail (`PubSubClient::publish()` returns false). The button color won't change because no status update will arrive. This is the correct behavior — the UI stays consistent with actual state.
+If MQTT is disconnected, toggle presses will silently fail (`PubSubClient::publish()` returns false). The button color won't change because no status update will arrive. This is the correct behavior — the UI stays consistent with actual state. When MQTT reconnects, a status request is automatically sent to refresh all light states.
 
 ### Rapid toggling
 

@@ -278,6 +278,7 @@ struct ImageFetcherConfig {
 - Cycle through available lights (select button)
 - Toggle the currently selected light via MQTT publish
 - Receive light status updates via MQTT (ON/OFF)
+- Request light status on boot and after MQTT reconnection
 - Display light name, button color, and ON/OFF images
 - Persist selected light index to NVS (30-second debounce)
 
@@ -290,6 +291,7 @@ void light_service_init(lv_obj_t* selectBtn, lv_obj_t* lightBtn,
 void light_service_handleMQTT(const char* payload);
 void light_service_cycleLight();
 void light_service_toggleCurrent();
+void light_service_requestStatus();
 void light_service_loop();
 ```
 
@@ -308,6 +310,7 @@ struct LightMeta {
 
 - Topic: `m18toggle` (shared for commands and status)
 - Publishes toggle payload on button press
+- Publishes `"status"` request at boot and on MQTT reconnect
 - Receives status payloads and updates `LightState` (UNKNOWN, ON, OFF)
 
 **UI Feedback:**
@@ -413,6 +416,22 @@ Display Update                          │
                                         │ show/hide ON/OFF images
                                         ▼
                                     Display Update
+
+Boot / MQTT Reconnect
+    │
+    │ light_service_requestStatus()
+    │ mqtt->publish("m18toggle", "status")
+    ▼
+MQTT Broker
+    │
+    │ Node-RED responds with each light's current state
+    │ (e.g., cu_on, sa_of, st_on, ...)
+    ▼
+light_service_handleMQTT()  (called once per status payload)
+    │
+    │ Update lightStates[], refresh UI for selected light
+    ▼
+Display Update
 ```
 
 ### 5.4 MQTT-Triggered Image Flow
