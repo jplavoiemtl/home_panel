@@ -225,6 +225,22 @@ handles partial updates correctly — each temperature is independent.
 Same as the light service: the publish in init silently fails, and the reconnection
 detector in `loop()` catches the transition and re-requests.
 
+### Duplicate status requests (echo loop)
+
+Because the ESP32 is subscribed to the `weather` topic and also publishes `"status"`
+to it, the broker echoes the message back. Node-RED sees both the original and the
+echo, causing a double response. This is resolved with a **2-second debounce** in
+the Node-RED status response function:
+
+```javascript
+var now = Date.now();
+var last = context.get("lastStatus") || 0;
+if (now - last < 2000) {
+    return null;
+}
+context.set("lastStatus", now);
+```
+
 ---
 
 ## Summary of Changes

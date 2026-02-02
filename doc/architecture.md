@@ -238,7 +238,35 @@ struct NetConfig {
 };
 ```
 
-### 4.3 Image Fetcher Module (`src/image/`)
+### 4.3 Temperature Service Module (`src/temperature/`)
+
+**Responsibilities:**
+
+- Cycle through temperature locations (select button)
+- Receive temperature data via MQTT from multiple sources
+- Request temperature status on boot and after MQTT reconnection
+- Display location name, temperature value, and sample time
+- Color coding based on temperature thresholds (blue/orange/red)
+- Persist selected location index to NVS (30-second debounce)
+
+**API:**
+
+```cpp
+void temperature_service_init(lv_obj_t* locLabel, lv_obj_t* tempLabel,
+                              lv_obj_t* timeLabel, PubSubClient* mqtt);
+void temperature_service_handleMQTT(const char* payload);
+void temperature_service_cycleLocation();
+void temperature_service_requestStatus();
+void temperature_service_loop();
+```
+
+**MQTT:**
+
+- Topic: `weather` (receives individual JSON payloads per source)
+- Publishes `"status"` request at boot and on MQTT reconnect
+- Parses keys: `OutsideTemp`, `AmbientTemp`, `BurjpTemp`, `MaitreTemp`, `MyriamTemp`
+
+### 4.4 Image Fetcher Module (`src/image/`)
 
 **Responsibilities:**
 
@@ -271,7 +299,7 @@ struct ImageFetcherConfig {
 };
 ```
 
-### 4.4 Light Service Module (`src/light/`)
+### 4.5 Light Service Module (`src/light/`)
 
 **Responsibilities:**
 
@@ -321,7 +349,7 @@ struct LightMeta {
 | OFF     | Dark grey   | Hidden   | Visible   |
 | UNKNOWN | Purple      | Hidden   | Hidden    |
 
-### 4.5 Screen Memory Module (`src/screen_memory/`) - Optional
+### 4.6 Screen Memory Module (`src/screen_memory/`) - Optional
 
 **Responsibilities:**
 

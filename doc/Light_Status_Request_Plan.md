@@ -116,11 +116,24 @@ If Node-RED restarts and loses light state context, it will respond with whateve
 default state it has. This is a Node-RED-side concern and outside the scope of this
 plan.
 
-### Duplicate status messages
+### Duplicate status requests (echo loop)
 
-The ESP32 may receive status payloads it has already processed (e.g., if another
-device also triggers a status request). This is harmless — `light_service_handleMQTT()`
-is idempotent and simply overwrites the existing state.
+Because the ESP32 is subscribed to the same topics it publishes `"status"` on,
+the broker echoes the `"status"` message back to the ESP32. Node-RED sees both
+the original and the echo, causing a double response. This is resolved with a
+**2-second debounce** in the Node-RED status response functions:
+
+```javascript
+var now = Date.now();
+var last = context.get("lastStatus") || 0;
+if (now - last < 2000) {
+    return null;
+}
+context.set("lastStatus", now);
+```
+
+This debounce should be added to both the light and temperature status response
+flows in Node-RED.
 
 ---
 
