@@ -25,6 +25,16 @@ bool isSecurePort(uint16_t port) {
   return port == 9735 || port == 8883;
 }
 
+// Subscribe to all configured MQTT topics
+void subscribeToAllTopics() {
+  if (!cfg.mqttClient) return;
+  if (cfg.topics.image)   cfg.mqttClient->subscribe(cfg.topics.image, 1);
+  if (cfg.topics.power)   cfg.mqttClient->subscribe(cfg.topics.power, 1);
+  if (cfg.topics.energy)  cfg.mqttClient->subscribe(cfg.topics.energy, 1);
+  if (cfg.topics.weather) cfg.mqttClient->subscribe(cfg.topics.weather, 1);
+  if (cfg.topics.light)   cfg.mqttClient->subscribe(cfg.topics.light, 1);
+}
+
 // Helper to attempt MQTT connection with current server config
 bool tryMqttConnect() {
   if (!cfg.mqttClient) return false;
@@ -33,22 +43,7 @@ bool tryMqttConnect() {
   delay(100);
 
   if (cfg.mqttClient->connect(cfg.clientId, USERNAME, KEY)) {
-    // Subscribe to topics
-    if (cfg.topics.image) {
-      cfg.mqttClient->subscribe(cfg.topics.image, 1);
-    }
-    if (cfg.topics.power) {
-      cfg.mqttClient->subscribe(cfg.topics.power, 1);
-    }
-    if (cfg.topics.energy) {
-      cfg.mqttClient->subscribe(cfg.topics.energy, 1);
-    }
-    if (cfg.topics.weather) {
-      cfg.mqttClient->subscribe(cfg.topics.weather, 1);
-    }
-    if (cfg.topics.light) {
-      cfg.mqttClient->subscribe(cfg.topics.light, 1);
-    }
+    subscribeToAllTopics();
     return true;
   }
   return false;
@@ -107,22 +102,7 @@ void netCheckMqtt(bool bypassRateLimit) {
     if (cfg.mqttClient->connect(cfg.clientId, USERNAME, KEY)) {
       mqttSuccess = true;
       Serial.println("MQTT: Reconnected successfully");
-      // Subscriptions
-      if (cfg.topics.image) {
-        cfg.mqttClient->subscribe(cfg.topics.image, 1);
-      }
-      if (cfg.topics.power) {
-        cfg.mqttClient->subscribe(cfg.topics.power, 1);
-      }
-      if (cfg.topics.energy) {
-        cfg.mqttClient->subscribe(cfg.topics.energy, 1);
-      }
-      if (cfg.topics.weather) {
-        cfg.mqttClient->subscribe(cfg.topics.weather, 1);
-      }
-      if (cfg.topics.light) {
-        cfg.mqttClient->subscribe(cfg.topics.light, 1);
-      }
+      subscribeToAllTopics();
     }
   }
 }
