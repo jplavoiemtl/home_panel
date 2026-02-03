@@ -24,7 +24,7 @@ static const char* NTP_SERVER = "pool.ntp.org";
 static const uint32_t LABEL_UPDATE_MS = 1000;        // 1 second
 static const uint32_t NTP_SYNC_INTERVAL_MS = 21600000; // 6 hours in ms
 static const uint32_t NTP_RETRY_INTERVAL_MS = 30000;  // 30 seconds retry on failure
-static const uint32_t COLOR_CHANGE_INTERVAL_MS = 1200000; // 1200000: 20 min in ms
+static const uint32_t COLOR_CHANGE_INTERVAL_MS = 600000; // 1200000: 20 min in ms
 
 // Time label colors (cycle randomly)
 static const uint32_t TIME_LABEL_COLORS[] = {
