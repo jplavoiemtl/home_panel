@@ -118,7 +118,7 @@ home_panel/
 │   │   └── time_service.cpp    # NTP time display implementation
 │   ├── screen/
 │   │   ├── screen_power.h      # Screen power management API
-│   │   └── screen_power.cpp    # Screen auto-dim implementation
+│   │   └── screen_power.cpp    # Day/night auto-dim implementation
 │   └── ui_custom.h             # Custom UI extensions
 ├── ui/                         # SquareLine Studio generated (gitignored)
 │   ├── ui.h
@@ -350,7 +350,30 @@ struct LightMeta {
 | OFF     | Dark grey   | Hidden   | Visible   |
 | UNKNOWN | Purple      | Hidden   | Hidden    |
 
-### 4.6 Screen Memory Module (`src/screen_memory/`) - Optional
+### 4.6 Screen Power Module (`src/screen/`)
+
+**Responsibilities:**
+
+- Automatic screen dimming after 2 minutes of inactivity
+- Day/night aware brightness: 10% during day (06:30–23:30), 3% at night
+- Boot in DIM state at day brightness to avoid full-brightness burst
+- Automatic brightness adjustment on day/night boundary crossing while dimmed
+- Wake to full brightness on touch or MQTT image activity
+
+**API:**
+
+```cpp
+void screenPowerInit(void);       // Boot into DIM state
+void screenPowerLoop(void);       // State machine: ON timeout + DIM boundary check
+void screenPowerActivity(void);   // Wake screen and reset inactivity timer
+ScreenPowerState screenPowerGetState(void);
+```
+
+**Time detection:** Uses `getLocalTime()` from `<Arduino.h>` to get `tm_hour` and
+`tm_min`, converted to minutes-since-midnight. Falls back to day brightness if NTP
+is not yet synced.
+
+### 4.7 Screen Memory Module (`src/screen_memory/`) - Optional
 
 **Responsibilities:**
 

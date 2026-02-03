@@ -111,7 +111,6 @@ void showConnectScreen(const char* message) {
 void showMainScreen() {
     Serial.println("Switching to main screen...");
     lv_scr_load(ui_Screen1);
-    bsp_display_backlight_on();
     Serial.println("Main screen active");
 }
 
