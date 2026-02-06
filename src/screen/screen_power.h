@@ -12,7 +12,7 @@ extern "C" {
 // Configuration constants
 #define SCREEN_ON_TIMEOUT_MS         120000       // 2 minutes before dimming
 #define SCREEN_DIM_DAY_BRIGHTNESS    10           // 10% brightness when dimmed during day
-#define SCREEN_DIM_NIGHT_BRIGHTNESS   1           // 1% brightness when dimmed at night
+#define SCREEN_DIM_NIGHT_BRIGHTNESS   2           // 2% brightness when dimmed at night
 #define DAY_START_MINUTES            (6 * 60 + 30)     // 06:30 = 390 minutes since midnight
 #define NIGHT_START_MINUTES          (22 * 60 + 30)    // 22:30 = 1350 minutes since midnight
 
