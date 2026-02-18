@@ -32,7 +32,7 @@ constexpr size_t MAX_JPEG_SIZE = 60000;  // 60 KB
 
 // --- Screen 2 timeout management ---
 constexpr unsigned long SCREEN2_LOADING_TIMEOUT = 30000;  // 30 seconds (allow time for download)
-constexpr unsigned long SCREEN2_DISPLAY_TIMEOUT = 120000;  // 2 minutes
+constexpr unsigned long SCREEN2_DISPLAY_TIMEOUT = 180000;  // 3 minutes
 
 // State
 volatile bool cleanupInProgress = false;  // Flag to stop buffer access during cleanup
@@ -240,7 +240,7 @@ void imageFetcherLoop() {
     if (imageDisplayTimeoutActive) {
       unsigned long elapsed = millis() - imageDisplayStartTime;
       if (elapsed > SCREEN2_DISPLAY_TIMEOUT) {
-        returnToScreen1("display timeout (2 minutes elapsed)");
+        returnToScreen1("display timeout (3 minutes elapsed)");
       }
     }
   }
