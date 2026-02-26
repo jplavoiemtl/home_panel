@@ -1,5 +1,5 @@
 // Home Panel - ESP32-S3 Smart Display
-// Displays power/energy data via MQTT and camera images via HTTP
+// Displays power/energy data via MQTT & camera images via HTTP
 
 #include <Arduino.h>
 #include <WiFi.h>
