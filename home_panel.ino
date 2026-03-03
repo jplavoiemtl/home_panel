@@ -68,6 +68,11 @@ constexpr unsigned long STATUS_UPDATE_INTERVAL = 2000;  // 2 seconds
 unsigned long lastHeapLog = 0;
 constexpr unsigned long HEAP_LOG_INTERVAL = 300000;  // 5 minutes
 
+// MQTT power stale data detection
+unsigned long lastPowerReceived = 0;
+bool powerStale = false;
+constexpr unsigned long MQTT_STALE_TIMEOUT_MS = 300000;  // 5 minutes
+
 // WiFi recovery state machine
 enum WifiState { WIFI_STATE_CONNECTED, WIFI_STATE_RECOVERING, WIFI_STATE_FAILED };
 WifiState wifiState = WIFI_STATE_CONNECTED;
@@ -325,6 +330,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     // Handle power topic
     if (strcmp(topic, TOPIC_POWER) == 0) {
+        lastPowerReceived = millis();
+        powerStale = false;
         if (ui_labelPowerValue) {
             char buf[32];
             snprintf(buf, sizeof(buf), "%s %s W", LV_SYMBOL_HOME, message);
@@ -554,6 +561,15 @@ void loop() {
     if (millis() - lastStatusUpdate > STATUS_UPDATE_INTERVAL) {
         lastStatusUpdate = millis();
         updateConnectionStatus();
+
+        // Check for stale power data (no MQTT update in 5 minutes)
+        if (lastPowerReceived > 0 && millis() - lastPowerReceived > MQTT_STALE_TIMEOUT_MS && !powerStale) {
+            powerStale = true;
+            if (ui_labelPowerValue) {
+                lv_label_set_text(ui_labelPowerValue, "N/A");
+            }
+            Serial.println("MQTT: Power data stale (no update in 5 minutes)");
+        }
     }
 
     // Screen power management (auto-dim after inactivity)

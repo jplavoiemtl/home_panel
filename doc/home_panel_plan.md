@@ -229,6 +229,20 @@ The Home Panel project will create a clean, maintainable ESP32-S3 firmware by se
 
 ---
 
+### Phase 8: Post-Launch Enhancements
+
+**Objective:** Add reliability and quality-of-life improvements after core functionality is stable.
+
+#### Milestone 8.1: MQTT Power Stale Data Detection (Completed)
+
+- Added 5-minute staleness timeout for MQTT power data
+- Power label shows "N/A" when no MQTT update received for 5+ minutes
+- Automatically recovers when fresh data arrives
+- No false trigger on boot (waits for first message before monitoring)
+- See `doc/mqtt_power_stale_detection_plan.md` for full details
+
+---
+
 ## 3. Module Dependency Order
 
 The following order minimizes integration risk:
