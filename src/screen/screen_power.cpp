@@ -15,7 +15,7 @@ static int lastAppliedBrightness = -1;
 static int getDimBrightness() {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo, 0)) {
-        return SCREEN_DIM_DAY_BRIGHTNESS;  // NTP not synced, default to day
+        return lastAppliedBrightness >= 0 ? lastAppliedBrightness : SCREEN_DIM_DAY_BRIGHTNESS;
     }
     int now = timeinfo.tm_hour * 60 + timeinfo.tm_min;
     bool isNight = (now >= NIGHT_START_MINUTES || now < DAY_START_MINUTES);
